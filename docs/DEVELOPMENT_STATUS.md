@@ -31,9 +31,9 @@ No feature is complete until it has been implemented, reviewed against the relev
 
 ## Current CI verification
 
-- Validation run #182 on commit `d91fb241951fdaf64cecf40f9d10faea2fb15456` completed successfully.
+- Validation run #188 on commit `98dbab1e17ce2469bfa9b419085df1c41532baf3` completed successfully.
 - Godot mission tests, traffic-vehicle tests, structured traffic-violation tests, all-GDScript parse validation, main-scene smoke test, gameplay-contract checks, and CRLF validation all passed in that run.
-- The mission headless test was hardened to free its temporary MissionManager; the follow-up run completed without the earlier resource-leak warning.
+- The mission headless test was hardened to free its temporary MissionManager; the follow-up run completed without the earlier resource-leak warning. The traffic violation model was consolidated under `scripts/violations/`, and the vehicle now validates structured evidence before recording it.
 
 ## Known verification gaps
 
