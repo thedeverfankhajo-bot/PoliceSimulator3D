@@ -13,14 +13,24 @@ const TRAFFIC_AI_SCRIPT := preload("res://scripts/traffic/traffic_ai_controller.
 
 @onready var player_spawn: Marker3D = $PlayerSpawn
 @onready var hud: CanvasLayer = $StatusHUD
+@onready var main_menu: CanvasLayer = $MainMenu
 
 var mission_manager: Node
 var player: CharacterBody3D
 var traffic_ai: Node
+var career: CareerProgression
+var scenario
+var _autosave_timer: Timer
 
 func _ready() -> void:
+	career = CareerProgression.new()
 	_build_city()
 	_spawn_gameplay()
+	main_menu.start_requested.connect(_start_new_game)
+	main_menu.continue_requested.connect(_continue_game)
+	main_menu.tutorial_requested.connect(_on_tutorial_opened)
+	main_menu.settings_requested.connect(_on_settings_opened)
+	_setup_autosave()
 
 func _spawn_gameplay() -> void:
 	traffic_ai = TRAFFIC_AI_SCRIPT.new()
@@ -72,7 +82,7 @@ func _spawn_gameplay() -> void:
 	mission_manager.mission_completed.connect(_on_mission_completed)
 	mission_manager.mission_failed.connect(_on_mission_failed)
 
-	var scenario := SCENARIO_SCRIPT.new()
+	scenario = SCENARIO_SCRIPT.new()
 	add_child(scenario)
 	if not scenario.setup(vehicle, traffic_vehicle, npc):
 		push_error("Traffic stop scenario failed to configure.")
@@ -192,8 +202,10 @@ func _material(color: Color, roughness: float) -> StandardMaterial3D:
 	return material
 
 func _on_mission_completed(mission) -> void:
+	career.add_xp(100)
+	SaveManager.save_game(player, career, true)
 	hud.show_mission(mission)
-	hud.set_status("ماموریت کامل شد: %s" % mission.title)
+	hud.set_status("ماموریت کامل شد: %s — +100 XP — رتبه: %s" % [mission.title, career.get_rank()])
 
 func _on_mission_failed(mission, reason: String) -> void:
 	hud.show_mission(mission)
@@ -213,3 +225,39 @@ func _on_violation_evidence_confirmed(evidence: Dictionary) -> void:
 		observed,
 		limit
 	])
+
+
+func _setup_autosave() -> void:
+	_autosave_timer = Timer.new()
+	_autosave_timer.wait_time = 30.0
+	_autosave_timer.autostart = true
+	_autosave_timer.timeout.connect(_autosave)
+	add_child(_autosave_timer)
+
+func _autosave() -> void:
+	if bool(GameSettings.get_value("gameplay/auto_save")) and is_instance_valid(player):
+		SaveManager.save_game(player, career, scenario != null and scenario.mission != null and scenario.mission.status == 2)
+
+func _start_new_game() -> void:
+	career.xp = 0
+	SaveManager.delete_save()
+	if is_instance_valid(player):
+		player.global_position = player_spawn.global_position
+	main_menu.close_menu()
+	hud.set_status("بازی جدید شروع شد. مأموریت اول را انجام بده.")
+
+func _continue_game() -> void:
+	if not SaveManager.load_game():
+		_start_new_game()
+		return
+	career.xp = int(SaveManager.data.get("xp", 0))
+	if is_instance_valid(player):
+		player.global_position = SaveManager.data.get("last_position", player_spawn.global_position)
+	main_menu.close_menu()
+	hud.set_status("بازی ادامه یافت — رتبه: %s — XP: %d" % [career.get_rank(), career.xp])
+
+func _on_tutorial_opened() -> void:
+	hud.set_status("آموزش از منوی اصلی باز شد.")
+
+func _on_settings_opened() -> void:
+	hud.set_status("تنظیمات ذخیره شد و از فایل user://settings.cfg استفاده می‌کند.")
