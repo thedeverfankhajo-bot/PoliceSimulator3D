@@ -2,11 +2,11 @@ extends Node3D
 class_name InteractionDetector
 
 @export var interaction_distance: float = 3.0
-@export var collision_mask: int = 1
+@export_flags_3d_physics var collision_mask: int = 1
 @onready var camera: Camera3D = $Camera3D
 
-signal interactable_found(target: Node)
-signal interaction_failed()
+signal interacted(target: Node)
+signal interaction_missed()
 
 func try_interact() -> void:
 	var from := camera.global_position
@@ -16,11 +16,12 @@ func try_interact() -> void:
 	query.collide_with_bodies = true
 	var result := get_world_3d().direct_space_state.intersect_ray(query)
 	if result.is_empty():
-		interaction_failed.emit()
+		interaction_missed.emit()
 		return
+
 	var target: Node = result["collider"]
 	if target.has_method("interact"):
 		target.interact()
-		interactable_found.emit(target)
+		interacted.emit(target)
 	else:
-		interaction_failed.emit()
+		interaction_missed.emit()
