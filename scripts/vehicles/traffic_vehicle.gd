@@ -18,11 +18,14 @@ func _physics_process(_delta: float) -> void:
 	if is_stopped:
 		velocity = Vector3.ZERO
 		return
-	velocity = -global_transform.basis.z * (traffic_speed_kmh / 3.6)
+	velocity = get_traffic_velocity()
 	move_and_slide()
 	_check_violation()
 	if global_position.z <= loop_end_z:
 		global_position.z = loop_start_z
+
+func get_traffic_velocity() -> Vector3:
+	return global_transform.basis.z * (traffic_speed_kmh / 3.6)
 
 func _check_violation() -> void:
 	if _violation_reported or traffic_speed_kmh <= speed_limit_kmh:
