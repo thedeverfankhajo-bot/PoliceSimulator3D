@@ -29,7 +29,7 @@ func _render_mission() -> void:
 		_mission.title,
 		_mission.description
 	]
-	var objectives := _mission.get_objectives()
+	var objectives: Array[Dictionary] = _mission.get_objectives()
 	for i in objectives.size():
 		var objective_title := String(objectives[i].get("title", "هدف نامشخص"))
 		var marker := "[x]" if _mission.is_objective_completed(i) else "[ ]"
