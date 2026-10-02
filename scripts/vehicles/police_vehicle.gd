@@ -10,8 +10,15 @@ signal entered(vehicle: PoliceVehicle)
 @export_range(0.0, 50.0, 0.5) var max_entry_speed_kmh: float = 5.0
 
 var is_occupied := false
+var siren_enabled := false
+var _siren_phase := 0.0
+@onready var siren_light: OmniLight3D = get_node_or_null("SirenLight") as OmniLight3D
 
-func _physics_process(_delta: float) -> void:
+func _physics_process(delta: float) -> void:
+	siren_enabled = Input.is_action_pressed("vehicle_siren") if is_occupied else false
+	_siren_phase += delta * 8.0
+	if siren_light != null:
+		siren_light.light_energy = 1.8 if siren_enabled and sin(_siren_phase) > 0.0 else 0.0
 	if not is_occupied:
 		engine_force = 0.0
 		steering = 0.0
