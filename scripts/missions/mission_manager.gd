@@ -11,16 +11,24 @@ var _starting_mission := false
 func start_mission(mission) -> bool:
 	if _starting_mission or mission == null or is_instance_valid(active_mission):
 		return false
-	_starting_mission = true
-	var started := mission.start()
-	_starting_mission = false
-	if not started:
-		return false
-	active_mission = mission
 	if not mission.completed.is_connected(_on_mission_completed):
 		mission.completed.connect(_on_mission_completed, CONNECT_ONE_SHOT)
 	if not mission.failed.is_connected(_on_mission_failed):
 		mission.failed.connect(_on_mission_failed, CONNECT_ONE_SHOT)
+
+	_starting_mission = true
+	active_mission = mission
+	var started := mission.start()
+	_starting_mission = false
+	if not started:
+		if active_mission == mission:
+			active_mission = null
+		if mission.completed.is_connected(_on_mission_completed):
+			mission.completed.disconnect(_on_mission_completed)
+		if mission.failed.is_connected(_on_mission_failed):
+			mission.failed.disconnect(_on_mission_failed)
+		return false
+
 	mission_started.emit(mission)
 	return true
 
