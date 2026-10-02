@@ -1,4 +1,4 @@
-[gd_scene load_steps=3 format=3]
+[gd_scene load_steps=5 format=3]
 
 [ext_resource type="Script" path="res://scripts/npcs/civilian_npc.gd" id="1_npc"]
 
@@ -6,9 +6,21 @@
 radius = 0.4
 height = 1.8
 
+[sub_resource type="CapsuleMesh" id="CapsuleMesh_npc"]
+radius = 0.4
+height = 1.8
+
+[sub_resource type="StandardMaterial3D" id="Material_npc"]
+albedo_color = Color(0.65, 0.48, 0.25, 1)
+
 [node name="CivilianNPC" type="StaticBody3D"]
 script = ExtResource("1_npc")
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="."]
 position = Vector3(0, 0.9, 0)
 shape = SubResource("CapsuleShape_npc")
+
+[node name="Visual" type="MeshInstance3D" parent="."]
+position = Vector3(0, 0.9, 0)
+mesh = SubResource("CapsuleMesh_npc")
+material_override = SubResource("Material_npc")
