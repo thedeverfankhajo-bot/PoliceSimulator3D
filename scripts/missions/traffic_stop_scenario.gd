@@ -8,12 +8,12 @@ var mission
 var vehicle: Node
 var npc: Node
 
-func setup(target_vehicle: PoliceVehicle, target_npc: CivilianNPC) -> bool:
+func setup(target_vehicle: Node, target_npc: Node) -> bool:
 	if target_vehicle == null or target_npc == null:
 		return false
 	vehicle = target_vehicle
 	npc = target_npc
-	mission = Mission.new()
+	mission = preload("res://scripts/missions/mission.gd").new()
 	mission.mission_id = "traffic_stop_001"
 	mission.title = mission_title
 	mission.description = mission_description
@@ -22,7 +22,7 @@ func setup(target_vehicle: PoliceVehicle, target_npc: CivilianNPC) -> bool:
 		{"id": "talk_to_civilian", "title": "با شهروند صحبت کن"}
 	])
 
-func start(mission_manager: MissionManager) -> bool:
+func start(mission_manager: Node) -> bool:
 	if mission == null or mission_manager == null:
 		return false
 	if not mission_manager.start_mission(mission):
@@ -35,12 +35,12 @@ func start(mission_manager: MissionManager) -> bool:
 		mission.completed.connect(_on_mission_completed, CONNECT_ONE_SHOT)
 	return true
 
-func _on_vehicle_entered(_vehicle: PoliceVehicle) -> void:
-	if mission == null or mission.status != MissionState.Status.ACTIVE:
+func _on_vehicle_entered(_vehicle) -> void:
+	if mission == null or mission.status != preload("res://scripts/missions/mission_state.gd").Status.ACTIVE:
 		return
 	mission.complete_objective(0)
 
-func _on_npc_interacted(_npc: CivilianNPC) -> void:
+func _on_npc_interacted(_npc) -> void:
 	if mission == null or mission.status != MissionState.Status.ACTIVE:
 		return
 	if not mission.is_objective_completed(0):
