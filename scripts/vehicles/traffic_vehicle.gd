@@ -118,12 +118,18 @@ func _check_red_light_violation(previous_z: float) -> void:
 	var stop_line_z := float(traffic_light.get_stop_line_z())
 	if previous_z > stop_line_z and global_position.z <= stop_line_z and not obey_traffic_light:
 		_red_light_reported = true
-		var evidence := TRAFFIC_VIOLATION_SCRIPT.create_red_light_evidence(traffic_light.get_light_id(), stop_line_z)
-		violation_detected.emit(self, String(evidence["title"]))
-		violation_evidence_detected.emit(self, evidence.duplicate(true))
+		_violation_reported = true
+		_violation_evidence = TRAFFIC_VIOLATION_SCRIPT.create_red_light_evidence(traffic_light.get_light_id(), stop_line_z)
+		if not TRAFFIC_VIOLATION_SCRIPT.is_valid_evidence(_violation_evidence):
+			_red_light_reported = false
+			_violation_reported = false
+			_violation_evidence.clear()
+			return
+		violation_detected.emit(self, String(_violation_evidence["title"]))
+		violation_evidence_detected.emit(self, _violation_evidence.duplicate(true))
 
 func has_reported_violation() -> bool:
-	return _violation_reported
+	return _violation_reported or _red_light_reported
 
 func get_violation_evidence() -> Dictionary:
 	return _violation_evidence.duplicate(true)
