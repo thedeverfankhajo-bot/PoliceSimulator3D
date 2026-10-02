@@ -49,6 +49,7 @@ func _ready() -> void:
 	hud.show_mission(scenario.mission)
 
 func _on_mission_completed(mission) -> void:
+	hud.show_mission(mission)
 	hud.set_status("ماموریت کامل شد: %s" % mission.title)
 
 func _on_vehicle_exit_blocked() -> void:
