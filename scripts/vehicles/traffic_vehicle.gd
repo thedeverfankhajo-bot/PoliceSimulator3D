@@ -19,6 +19,7 @@ var is_stopped := false
 var _violation_reported := false
 var _loop_start_position := Vector3.ZERO
 var _loop_reset_rotation := Basis.IDENTITY
+var _spawn_initialized := false
 
 
 func _ready() -> void:
@@ -26,6 +27,10 @@ func _ready() -> void:
 	_loop_reset_rotation = global_transform.basis
 
 func _physics_process(delta: float) -> void:
+	if not _spawn_initialized:
+		_loop_start_position = global_position
+		_loop_reset_rotation = global_transform.basis
+		_spawn_initialized = true
 	if is_stopped:
 		velocity = Vector3.ZERO
 		return
