@@ -30,7 +30,10 @@ func _ready() -> void:
 
 	var scenario := SCENARIO_SCRIPT.new()
 	add_child(scenario)
-	scenario.setup(vehicle, npc)
+	if not scenario.setup(vehicle, npc):
+		push_error("Traffic stop scenario failed to configure.")
+		scenario.queue_free()
+		return
 	if not scenario.start(mission_manager):
 		push_error("Traffic stop scenario failed to start.")
 		return
