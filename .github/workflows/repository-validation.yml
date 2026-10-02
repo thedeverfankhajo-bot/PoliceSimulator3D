@@ -1,0 +1,150 @@
+name: Repository validation
+
+on:
+  push:
+    branches: [ "main", "feature/bootstrap-godot-project" ]
+  pull_request:
+    branches: [ "main" ]
+
+concurrency:
+  group: repository-validation-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false
+
+      - name: Reject obvious secret/signing files
+        shell: bash
+        run: |
+          set -euo pipefail
+          forbidden='(\.env($|\.)|\.pem$|\.p12$|\.pk8$|\.jks$|\.keystore$|export_credentials\.cfg$)'
+          if git ls-files | grep -E "$forbidden"; then
+            echo "Forbidden secret/signing file detected."
+            exit 1
+          fi
+
+      - name: Validate required project files
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f project.godot
+          test -f scenes/main/main.tscn
+          test -f scripts/core/main.gd
+          test -f scripts/player/player_controller.gd
+          test -f scripts/player/interaction_detector.gd
+          test -f scripts/missions/mission.gd
+          test -f scripts/missions/mission_manager.gd
+
+      - name: Validate Godot project structure without executing the engine
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f project.godot
+          grep -q '^config/name=' project.godot
+          grep -q '^run/main_scene=' project.godot
+          grep -q '^config/features=.*4\.7' project.godot
+          grep -q '^renderer/rendering_method=' project.godot
+
+      - name: Validate required gameplay scenes
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f scenes/player/player.tscn
+          test -f scenes/vehicles/police_vehicle.tscn
+          test -f scenes/npcs/civilian_npc.tscn
+          test -f scenes/ui/status_hud.tscn
+          grep -q 'class_name Mission' scripts/missions/mission.gd
+          grep -q 'class_name MissionManager' scripts/missions/mission_manager.gd
+
+      - name: Validate police vehicle and interaction contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -q 'type="VehicleBody3D"' scenes/vehicles/police_vehicle.tscn
+          test "$(grep -c 'type="VehicleWheel3D"' scenes/vehicles/police_vehicle.tscn)" -eq 4
+          test "$(grep -c 'use_as_steering = true' scenes/vehicles/police_vehicle.tscn)" -eq 2
+          test "$(grep -c 'use_as_traction = true' scenes/vehicles/police_vehicle.tscn)" -eq 2
+          grep -q 'name="ExitPoint"' scenes/vehicles/police_vehicle.tscn
+          grep -q 'is_occupied' scripts/vehicles/police_vehicle.gd
+          grep -q 'max_entry_speed_kmh' scripts/vehicles/police_vehicle.gd
+          grep -q 'enter_vehicle' scripts/player/player_controller.gd
+          grep -q 'exit_vehicle' scripts/player/player_controller.gd
+          grep -q 'PhysicsShapeQueryParameters3D' scripts/player/player_controller.gd
+          grep -q 'func _find_interactable(start: Node)' scripts/player/interaction_detector.gd
+          grep -q 'query.exclude = \[get_parent().get_parent().get_rid()\]' scripts/player/interaction_detector.gd
+          grep -q 'vehicle.entered.connect(player.enter_vehicle)' scripts/core/main.gd
+          grep -q 'npc.interacted.connect(_on_npc_interacted)' scripts/missions/traffic_stop_scenario.gd
+          grep -q 'enter_patrol_vehicle' scripts/missions/traffic_stop_scenario.gd
+          grep -q 'TRAFFIC_VEHICLE_SCENE' scripts/core/main.gd
+          grep -q 'violation_detected.connect(_on_traffic_violation)' scripts/core/main.gd
+          grep -q 'class_name TrafficVehicle' scripts/vehicles/traffic_vehicle.gd
+          test -f scenes/vehicles/traffic_vehicle.tscn
+          grep -q 'if not vehicle.entered.is_connected(_on_vehicle_entered)' scripts/missions/traffic_stop_scenario.gd
+          grep -q 'not mission.is_objective_completed(0)' scripts/missions/traffic_stop_scenario.gd
+          grep -q '_mission = mission' scripts/ui/status_hud.gd
+
+      - name: Validate action pinning and least privilege
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -Eq 'uses: actions/checkout@[0-9a-f]{40}' .github/workflows/repository-validation.yml
+          grep -q 'persist-credentials: false' .github/workflows/repository-validation.yml
+          grep -q '^permissions:' .github/workflows/repository-validation.yml
+          grep -q 'contents: read' .github/workflows/repository-validation.yml
+
+      - name: Run Godot mission tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          GODOT_VERSION="4.7.2"
+          GODOT_ARCHIVE="Godot_v${GODOT_VERSION}-stable_linux.x86_64.zip"
+          GODOT_URL="https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}-stable/${GODOT_ARCHIVE}"
+          GODOT_SHA256="cadd3204e728a35d3f13adb7fd0d7902636b79f6b95c40c265eb73b6c35329e4"
+          curl --fail --location --retry 3 --output "$GODOT_ARCHIVE" "$GODOT_URL"
+          printf '%s  %s\n' "$GODOT_SHA256" "$GODOT_ARCHIVE" | sha256sum --check --status
+          unzip -q "$GODOT_ARCHIVE" -d .godot-ci
+          GODOT_BIN=".godot-ci/Godot_v${GODOT_VERSION}-stable_linux.x86_64"
+          chmod +x "$GODOT_BIN"
+          timeout 60s "$GODOT_BIN" --headless --path . --script res://tests/test_mission.gd
+          timeout 60s "$GODOT_BIN" --headless --path . --script res://tests/test_traffic_vehicle.gd
+
+      - name: Parse all GDScript files
+        shell: bash
+        run: |
+          set -euo pipefail
+          GODOT_BIN=".godot-ci/Godot_v4.7.2-stable_linux.x86_64"
+          while IFS= read -r -d '' script; do
+            timeout 30s "$GODOT_BIN" --headless --path . --check-only --script "$script"
+          done < <(find scripts tests -type f -name '*.gd' -print0)
+
+      - name: Smoke test main scene
+        shell: bash
+        run: |
+          set -euo pipefail
+          GODOT_BIN=".godot-ci/Godot_v4.7.2-stable_linux.x86_64"
+          LOG_FILE=".godot-ci/main-scene.log"
+          timeout 60s "$GODOT_BIN" --headless --path . --quit-after 120 2>&1 | tee "$LOG_FILE"
+          if grep -Eq 'ERROR:|SCRIPT ERROR|instances were leaked|RID allocations.*leaked' "$LOG_FILE"; then
+            echo "Godot smoke test emitted an engine/script error."
+            exit 1
+          fi
+
+      - name: Validate text files have no CRLF
+        shell: bash
+        run: |
+          set -euo pipefail
+          files="$(git ls-files -z | xargs -0 -r file --mime-type | awk -F: '$2 ~ /text\// {sub(/^ /,"",$2); if ($2 ~ /charset=binary/) next; print $1}')"
+          if [ -n "$files" ] && printf '%s\n' "$files" | xargs -r grep -Il $'\r'; then
+            echo "CRLF detected in a tracked text file."
+            exit 1
+          fi

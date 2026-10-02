@@ -1,0 +1,99 @@
+[gd_scene load_steps=10 format=3]
+
+[ext_resource type="Script" path="res://scripts/vehicles/police_vehicle.gd" id="1_vehicle"]
+
+[sub_resource type="BoxShape3D" id="BoxShape_vehicle"]
+size = Vector3(2.0, 1.2, 4.2)
+
+[sub_resource type="BoxMesh" id="BoxMesh_vehicle"]
+size = Vector3(2.0, 1.2, 4.2)
+
+[sub_resource type="StandardMaterial3D" id="Material_vehicle"]
+albedo_color = Color(0.06, 0.08, 0.12, 1)
+roughness = 0.75
+
+[sub_resource type="CylinderMesh" id="WheelMesh"]
+top_radius = 0.38
+bottom_radius = 0.38
+height = 0.22
+
+[sub_resource type="StandardMaterial3D" id="WheelMaterial"]
+albedo_color = Color(0.015, 0.015, 0.018, 1)
+roughness = 0.9
+
+[node name="PoliceVehicle" type="VehicleBody3D"]
+script = ExtResource("1_vehicle")
+mass = 1400.0
+center_of_mass_mode = 1
+center_of_mass = Vector3(0, -0.35, 0)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+position = Vector3(0, 0.6, 0)
+shape = SubResource("BoxShape_vehicle")
+
+[node name="Visual" type="MeshInstance3D" parent="."]
+position = Vector3(0, 0.6, 0)
+mesh = SubResource("BoxMesh_vehicle")
+material_override = SubResource("Material_vehicle")
+
+[node name="FrontLeftWheel" type="VehicleWheel3D" parent="."]
+position = Vector3(-0.85, 0.38, -1.35)
+wheel_radius = 0.38
+wheel_rest_length = 0.18
+suspension_travel = 0.2
+use_as_traction = false
+use_as_steering = true
+wheel_friction_slip = 1.0
+
+[node name="FrontRightWheel" type="VehicleWheel3D" parent="."]
+position = Vector3(0.85, 0.38, -1.35)
+wheel_radius = 0.38
+wheel_rest_length = 0.18
+suspension_travel = 0.2
+use_as_traction = false
+use_as_steering = true
+wheel_friction_slip = 1.0
+
+[node name="RearLeftWheel" type="VehicleWheel3D" parent="."]
+position = Vector3(-0.85, 0.38, 1.35)
+wheel_radius = 0.38
+wheel_rest_length = 0.18
+suspension_travel = 0.2
+use_as_traction = true
+use_as_steering = false
+wheel_friction_slip = 1.0
+
+[node name="RearRightWheel" type="VehicleWheel3D" parent="."]
+position = Vector3(0.85, 0.38, 1.35)
+wheel_radius = 0.38
+wheel_rest_length = 0.18
+suspension_travel = 0.2
+use_as_traction = true
+use_as_steering = false
+wheel_friction_slip = 1.0
+
+[node name="WheelVisualFrontLeft" type="MeshInstance3D" parent="."]
+position = Vector3(-0.85, 0.38, -1.35)
+rotation_degrees = Vector3(0, 0, 90)
+mesh = SubResource("WheelMesh")
+material_override = SubResource("WheelMaterial")
+
+[node name="WheelVisualFrontRight" type="MeshInstance3D" parent="."]
+position = Vector3(0.85, 0.38, -1.35)
+rotation_degrees = Vector3(0, 0, 90)
+mesh = SubResource("WheelMesh")
+material_override = SubResource("WheelMaterial")
+
+[node name="WheelVisualRearLeft" type="MeshInstance3D" parent="."]
+position = Vector3(-0.85, 0.38, 1.35)
+rotation_degrees = Vector3(0, 0, 90)
+mesh = SubResource("WheelMesh")
+material_override = SubResource("WheelMaterial")
+
+[node name="WheelVisualRearRight" type="MeshInstance3D" parent="."]
+position = Vector3(0.85, 0.38, 1.35)
+rotation_degrees = Vector3(0, 0, 90)
+mesh = SubResource("WheelMesh")
+material_override = SubResource("WheelMaterial")
+[node name="ExitPoint" type="Marker3D" parent="."]
+position = Vector3(2.2, 0.0, 0.0)
