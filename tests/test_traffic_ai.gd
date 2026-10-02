@@ -21,6 +21,10 @@ func _initialize() -> void:
 	if controller.get_registered_vehicle_count() != 2:
 		_fail("Traffic AI must register unique vehicles.")
 		return
+	controller.register_vehicle(follower)
+	if controller.get_registered_vehicle_count() != 2:
+		_fail("Traffic AI registration must be idempotent.")
+		return
 	controller.unregister_vehicle(leader)
 	if controller.get_registered_vehicle_count() != 1:
 		_fail("Traffic AI must unregister vehicles.")
