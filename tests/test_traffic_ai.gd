@@ -8,12 +8,14 @@ func _fail(message: String) -> void:
 
 func _initialize() -> void:
 	var controller = AI_SCRIPT.new()
+	var root := Node.new()
+	add_child(root)
 	var leader := Node3D.new()
 	leader.position = Vector3(0, 0, 0)
 	var follower := Node3D.new()
 	follower.position = Vector3(0, 0, 5)
-	add_child(leader)
-	add_child(follower)
+	root.add_child(leader)
+	root.add_child(follower)
 	controller.register_vehicle(leader)
 	controller.register_vehicle(follower)
 	if controller.get_registered_vehicle_count() != 2:
@@ -25,6 +27,7 @@ func _initialize() -> void:
 		return
 	follower.queue_free()
 	leader.queue_free()
+	root.free()
 	controller.free()
 	print("Traffic AI tests passed.")
 	quit(0)
