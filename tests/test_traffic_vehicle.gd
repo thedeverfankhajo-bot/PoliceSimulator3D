@@ -16,6 +16,9 @@ func _initialize() -> void:
 		_fail("Traffic vehicle must travel toward the loop end on negative Z.")
 		return
 	vehicle._check_violation()
+	if not vehicle.has_reported_violation():
+		_fail("Public violation state must report the recorded violation.")
+		return
 	if not vehicle._violation_reported:
 		_fail("Speeding vehicle must record a violation.")
 		return
