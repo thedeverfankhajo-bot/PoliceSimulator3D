@@ -33,7 +33,7 @@ func _ready() -> void:
 	add_child(traffic_vehicle)
 	traffic_vehicle.violation_detected.connect(_on_traffic_violation)
 
-	mission_manager = MissionManager.new()
+	mission_manager = preload("res://scripts/missions/mission_manager.gd").new()
 	add_child(mission_manager)
 	mission_manager.mission_completed.connect(_on_mission_completed)
 
