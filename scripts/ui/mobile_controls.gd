@@ -18,16 +18,20 @@ var _action_center := Vector2.ZERO
 var _visible_on_device := false
 
 func _ready() -> void:
-	set_process_input(true)
+	_layout_controls()
 	_visible_on_device = OS.has_feature("mobile") or DisplayServer.is_touchscreen_available()
 	visible = desktop_preview or _visible_on_device
 	queue_redraw()
 
 func _notification(what: int) -> void:
 	if what == NOTIFICATION_RESIZED:
+		_layout_controls()
 		queue_redraw()
 
-func _unhandled_input(event: InputEvent) -> void:
+func _layout_controls() -> void:
+	_action_center = Vector2(size.x - 110.0, size.y - 110.0)
+
+func _input(event: InputEvent) -> void:
 	if not visible:
 		return
 	if event is InputEventScreenTouch:
@@ -93,7 +97,7 @@ func _release_action() -> void:
 	Input.action_release("interact")
 
 func _draw() -> void:
-	_action_center = Vector2(size.x - 110.0, size.y - 110.0)
+	_layout_controls()
 	var base := _joystick_origin if _joystick_id != -1 else Vector2(120.0, size.y - 120.0)
 	draw_circle(base, joystick_radius, Color(1, 1, 1, 0.12))
 	draw_circle(base + _joystick_vector * joystick_radius, joystick_radius * 0.42, Color(1, 1, 1, 0.28))
