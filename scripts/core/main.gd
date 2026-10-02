@@ -10,6 +10,7 @@ const TRAFFIC_VEHICLE_SCENE := preload("res://scenes/vehicles/traffic_vehicle.ts
 const SCENARIO_SCRIPT := preload("res://scripts/missions/traffic_stop_scenario.gd")
 const TRAFFIC_LIGHT_SCRIPT := preload("res://scripts/traffic/traffic_light.gd")
 const TRAFFIC_AI_SCRIPT := preload("res://scripts/traffic/traffic_ai_controller.gd")
+const CAREER_SCRIPT := preload("res://scripts/core/career_progression.gd")
 
 @onready var player_spawn: Marker3D = $PlayerSpawn
 @onready var hud: CanvasLayer = $StatusHUD
@@ -18,12 +19,12 @@ const TRAFFIC_AI_SCRIPT := preload("res://scripts/traffic/traffic_ai_controller.
 var mission_manager: Node
 var player: CharacterBody3D
 var traffic_ai: Node
-var career: CareerProgression
+var career
 var scenario
 var _autosave_timer: Timer
 
 func _ready() -> void:
-	career = CareerProgression.new()
+	career = CAREER_SCRIPT.new()
 	_build_city()
 	_spawn_gameplay()
 	main_menu.start_requested.connect(_start_new_game)
