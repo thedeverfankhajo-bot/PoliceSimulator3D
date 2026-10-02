@@ -21,17 +21,19 @@ func setup(target_vehicle: PoliceVehicle, target_npc: CivilianNPC) -> bool:
 		{"id": "inspect_vehicle", "title": "با خودرو تعامل کن"},
 		{"id": "talk_to_civilian", "title": "با شهروند صحبت کن"}
 	]):
-		mission.queue_free()
+		mission.free()
 		mission = null
 		return false
-	vehicle.entered.connect(_on_vehicle_interacted, CONNECT_ONE_SHOT)
-	npc.interacted.connect(_on_npc_interacted, CONNECT_ONE_SHOT)
 	return true
 
 func start(mission_manager: MissionManager) -> bool:
 	if mission == null or mission_manager == null:
 		return false
-	return mission_manager.start_mission(mission)
+	if not mission_manager.start_mission(mission):
+		return false
+	vehicle.entered.connect(_on_vehicle_interacted, CONNECT_ONE_SHOT)
+	npc.interacted.connect(_on_npc_interacted, CONNECT_ONE_SHOT)
+	return true
 
 func _on_vehicle_interacted(_vehicle: PoliceVehicle) -> void:
 	if mission != null:
