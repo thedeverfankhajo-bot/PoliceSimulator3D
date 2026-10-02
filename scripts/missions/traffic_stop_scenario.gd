@@ -8,7 +8,9 @@ var mission: Mission
 var vehicle: PoliceVehicle
 var npc: CivilianNPC
 
-func setup(target_vehicle: PoliceVehicle, target_npc: CivilianNPC) -> void:
+func setup(target_vehicle: PoliceVehicle, target_npc: CivilianNPC) -> bool:
+	if target_vehicle == null or target_npc == null:
+		return false
 	vehicle = target_vehicle
 	npc = target_npc
 	mission = Mission.new()
@@ -19,8 +21,9 @@ func setup(target_vehicle: PoliceVehicle, target_npc: CivilianNPC) -> void:
 		{"id": "inspect_vehicle", "title": "با خودرو تعامل کن"},
 		{"id": "talk_to_civilian", "title": "با شهروند صحبت کن"}
 	])
-	vehicle.entered.connect(_on_vehicle_interacted)
-	npc.interacted.connect(_on_npc_interacted)
+	vehicle.entered.connect(_on_vehicle_interacted, CONNECT_ONE_SHOT)
+	npc.interacted.connect(_on_npc_interacted, CONNECT_ONE_SHOT)
+	return true
 
 func start(mission_manager: MissionManager) -> bool:
 	if mission == null:
