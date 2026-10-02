@@ -3,6 +3,7 @@ class_name TrafficStopScenario
 
 @export var mission_title := "اولین توقف ترافیکی"
 @export_multiline var mission_description := "سوار خودروی پلیس شو، خودروی متخلف را متوقف کن و با شهروند تعامل کن."
+@export_range(30.0, 600.0, 5.0) var mission_timeout_seconds: float = 180.0
 
 const MISSION_SCRIPT := preload("res://scripts/missions/mission.gd")
 const MISSION_STATE := preload("res://scripts/missions/mission_state.gd")
@@ -11,6 +12,7 @@ var mission
 var vehicle: Node
 var traffic_vehicle: Node
 var npc: Node
+var _mission_timer: Timer
 
 func setup(target_vehicle: Node, target_traffic_vehicle: Node, target_npc: Node) -> bool:
 	if target_vehicle == null or target_traffic_vehicle == null or target_npc == null:
@@ -53,16 +55,12 @@ func start(mission_manager: Node) -> bool:
 	if not mission_manager.start_mission(mission):
 		_disconnect_signals()
 		return false
-	if not vehicle.entered.is_connected(_on_vehicle_entered):
-		vehicle.entered.connect(_on_vehicle_entered)
-	if not traffic_vehicle.stopped.is_connected(_on_traffic_vehicle_stopped):
-		traffic_vehicle.stopped.connect(_on_traffic_vehicle_stopped)
-	if not mission.completed.is_connected(_on_mission_completed):
-		mission.completed.connect(_on_mission_completed, CONNECT_ONE_SHOT)
-	if not mission.failed.is_connected(_on_mission_failed):
-		mission.failed.connect(_on_mission_failed, CONNECT_ONE_SHOT)
-	if not npc.interacted.is_connected(_on_npc_interacted):
-		npc.interacted.connect(_on_npc_interacted)
+	_mission_timer = Timer.new()
+	_mission_timer.one_shot = true
+	_mission_timer.wait_time = mission_timeout_seconds
+	_mission_timer.timeout.connect(_on_mission_timeout)
+	add_child(_mission_timer)
+	_mission_timer.start()
 	return true
 
 func _on_vehicle_entered(entered_vehicle) -> void:
@@ -86,12 +84,24 @@ func _on_npc_interacted(interacted_npc) -> void:
 
 func _on_mission_failed(_reason: String) -> void:
 	_disconnect_signals()
+	_stop_timer()
+
+func _on_mission_timeout() -> void:
+	if _is_active():
+		mission.fail("زمان مأموریت به پایان رسید.")
 
 func _is_active() -> bool:
 	return mission != null and mission.status == MISSION_STATE.Status.ACTIVE
 
 func _on_mission_completed() -> void:
 	_disconnect_signals()
+	_stop_timer()
+
+func _stop_timer() -> void:
+	if is_instance_valid(_mission_timer):
+		_mission_timer.stop()
+		_mission_timer.queue_free()
+		_mission_timer = null
 
 func _disconnect_signals() -> void:
 	if is_instance_valid(npc) and npc.interacted.is_connected(_on_npc_interacted):
