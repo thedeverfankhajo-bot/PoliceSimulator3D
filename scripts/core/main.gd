@@ -36,6 +36,7 @@ func _ready() -> void:
 	mission_manager = preload("res://scripts/missions/mission_manager.gd").new()
 	add_child(mission_manager)
 	mission_manager.mission_completed.connect(_on_mission_completed)
+	mission_manager.mission_failed.connect(_on_mission_failed)
 
 	var scenario := SCENARIO_SCRIPT.new()
 	add_child(scenario)
@@ -51,6 +52,10 @@ func _ready() -> void:
 func _on_mission_completed(mission) -> void:
 	hud.show_mission(mission)
 	hud.set_status("ماموریت کامل شد: %s" % mission.title)
+
+func _on_mission_failed(mission, reason: String) -> void:
+	hud.show_mission(mission)
+	hud.set_status("ماموریت ناموفق: %s%s" % [mission.title, (" — " + reason) if not reason.is_empty() else ""])
 
 func _on_vehicle_exit_blocked() -> void:
 	push_warning("Vehicle exit blocked: no safe space for the player.")
