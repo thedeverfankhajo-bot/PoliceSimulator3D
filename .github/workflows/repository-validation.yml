@@ -65,6 +65,15 @@ jobs:
           grep -q 'class_name Mission' scripts/missions/mission.gd
           grep -q 'class_name MissionManager' scripts/missions/mission_manager.gd
 
+      - name: Validate police vehicle physics composition
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -q 'type="VehicleBody3D"' scenes/vehicles/police_vehicle.tscn
+          test "$(grep -c 'type="VehicleWheel3D"' scenes/vehicles/police_vehicle.tscn)" -eq 4
+          test "$(grep -c 'use_as_steering = true' scenes/vehicles/police_vehicle.tscn)" -eq 2
+          test "$(grep -c 'use_as_traction = true' scenes/vehicles/police_vehicle.tscn)" -eq 2
+
       - name: Validate text files have no CRLF
         shell: bash
         run: |
