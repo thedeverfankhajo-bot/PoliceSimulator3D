@@ -57,8 +57,10 @@ func _on_vehicle_entered(_vehicle) -> void:
 		return
 	mission.complete_objective(0)
 
-func _on_traffic_vehicle_stopped(_vehicle) -> void:
+func _on_traffic_vehicle_stopped(stopped_vehicle) -> void:
 	if not _is_active() or not mission.is_objective_completed(0):
+		return
+	if stopped_vehicle != traffic_vehicle:
 		return
 	mission.complete_objective(1)
 
