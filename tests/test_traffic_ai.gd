@@ -9,7 +9,7 @@ func _fail(message: String) -> void:
 func _initialize() -> void:
 	var controller = AI_SCRIPT.new()
 	var root := Node.new()
-	add_child(root)
+	get_root().add_child(root)
 	var leader := Node3D.new()
 	leader.position = Vector3(0, 0, 0)
 	var follower := Node3D.new()
