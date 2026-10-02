@@ -13,8 +13,6 @@ signal stopped(vehicle: TrafficVehicle)
 var is_stopped := false
 var _violation_reported := false
 
-func _ready() -> void:
-	_check_violation()
 
 func _physics_process(_delta: float) -> void:
 	if is_stopped:
