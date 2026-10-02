@@ -2,6 +2,7 @@ extends SceneTree
 
 const MISSION_SCRIPT := preload("res://scripts/missions/mission.gd")
 const MISSION_STATE := preload("res://scripts/missions/mission_state.gd")
+const MISSION_MANAGER_SCRIPT := preload("res://scripts/missions/mission_manager.gd")
 
 func _fail(message: String) -> void:
 	push_error(message)
@@ -43,6 +44,24 @@ func _initialize() -> void:
 		_fail("Mission should complete after all objectives.")
 		return
 
+	var manager := MISSION_MANAGER_SCRIPT.new()
+	var managed_mission = MISSION_SCRIPT.new()
+	if not managed_mission.configure([{"id": "managed", "title": "Managed objective"}]):
+		_fail("Managed mission must configure.")
+		return
+	if not manager.start_mission(managed_mission):
+		_fail("Mission manager must start a configured mission.")
+		return
+	if manager.active_mission != managed_mission:
+		_fail("Mission manager must track its active mission.")
+		return
+	if not managed_mission.complete_objective(0):
+		_fail("Managed mission objective should complete.")
+		return
+	if manager.active_mission != null:
+		_fail("Mission manager must clear active mission after completion.")
+		return
+
 	var failed_mission = MISSION_SCRIPT.new()
 	if not failed_mission.configure([{"id": "fail", "title": "Failure objective"}]):
 		_fail("Failure test mission must configure.")
@@ -61,6 +80,20 @@ func _initialize() -> void:
 		return
 	if failed_mission.fail("second failure"):
 		_fail("Failed mission must not fail twice.")
+		return
+
+	var failed_managed_mission = MISSION_SCRIPT.new()
+	if not failed_managed_mission.configure([{"id": "managed_fail", "title": "Managed failure"}]):
+		_fail("Managed failure mission must configure.")
+		return
+	if not manager.start_mission(failed_managed_mission):
+		_fail("Mission manager must start failure mission.")
+		return
+	if not failed_managed_mission.fail("Suspect escaped"):
+		_fail("Managed mission must fail.")
+		return
+	if manager.active_mission != null:
+		_fail("Mission manager must clear active mission after failure.")
 		return
 
 	print("Mission tests passed.")
