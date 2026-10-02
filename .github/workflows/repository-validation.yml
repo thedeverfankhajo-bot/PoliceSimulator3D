@@ -46,6 +46,7 @@ jobs:
           test -f scripts/missions/mission_manager.gd
           test -f scripts/violations/traffic_violation.gd
           test -f tests/test_traffic_violation.gd
+          tests/test_traffic_light.gd
           test -f export_presets.cfg
           test -f .github/workflows/android-apk.yml
           test -f assets/icons/police_simulator.svg
