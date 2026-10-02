@@ -1,12 +1,12 @@
 extends Node
 class_name MissionManager
 
-signal mission_started(mission: Mission)
-signal mission_completed(mission: Mission)
+signal mission_started(mission)
+signal mission_completed(mission)
 
-var active_mission: Mission
+var active_mission
 
-func start_mission(mission: Mission) -> bool:
+func start_mission(mission) -> bool:
 	if mission == null or is_instance_valid(active_mission):
 		return false
 	if not mission.start():
@@ -16,7 +16,7 @@ func start_mission(mission: Mission) -> bool:
 	mission_started.emit(mission)
 	return true
 
-func _on_mission_completed(mission: Mission) -> void:
+func _on_mission_completed(mission) -> void:
 	if active_mission != mission:
 		return
 	mission_completed.emit(mission)
