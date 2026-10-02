@@ -1,4 +1,4 @@
-extends Node
+extends RefCounted
 class_name Mission
 
 signal status_changed(status: MissionState.Status)
@@ -18,11 +18,15 @@ func configure(objectives: Array[Dictionary]) -> bool:
 		return false
 	if objectives.is_empty():
 		return false
+	var ids := {}
 	for objective in objectives:
 		if not objective.has("id") or not objective.has("title"):
 			return false
-		if String(objective["id"]).is_empty() or String(objective["title"]).is_empty():
+		var id := String(objective["id"]).strip_edges()
+		var objective_title := String(objective["title"]).strip_edges()
+		if id.is_empty() or objective_title.is_empty() or ids.has(id):
 			return false
+		ids[id] = true
 	_objectives = objectives.duplicate(true)
 	_completed.clear()
 	_completed.resize(_objectives.size())
