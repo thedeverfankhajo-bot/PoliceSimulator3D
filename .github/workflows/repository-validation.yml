@@ -116,6 +116,7 @@ jobs:
           GODOT_BIN=".godot-ci/Godot_v${GODOT_VERSION}-stable_linux.x86_64"
           chmod +x "$GODOT_BIN"
           "$GODOT_BIN" --headless --path . --script res://tests/test_mission.gd
+          "$GODOT_BIN" --headless --path . --script res://tests/test_traffic_vehicle.gd
 
       - name: Smoke test main scene
         shell: bash
