@@ -11,6 +11,8 @@ var _starting_mission := false
 func start_mission(mission) -> bool:
 	if _starting_mission or mission == null or is_instance_valid(active_mission):
 		return false
+	if not mission.has_signal("completed") or not mission.has_signal("failed") or not mission.has_method("start"):
+		return false
 	if not mission.completed.is_connected(_on_mission_completed):
 		mission.completed.connect(_on_mission_completed, CONNECT_ONE_SHOT)
 	if not mission.failed.is_connected(_on_mission_failed):
