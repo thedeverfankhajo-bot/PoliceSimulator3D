@@ -25,3 +25,12 @@ static func is_valid_evidence(evidence: Dictionary) -> bool:
 	if observed_speed < 0.0 or speed_limit < 0.0 or excess_speed < 0.0:
 		return false
 	return is_equal_approx(excess_speed, maxf(0.0, observed_speed - speed_limit))
+
+
+static func create_red_light_evidence(light_id: String, stop_line_z: float) -> Dictionary:
+	return {
+		"id": "red_light",
+		"title": "عبور از چراغ قرمز",
+		"traffic_light_id": light_id,
+		"stop_line_z": stop_line_z
+	}
