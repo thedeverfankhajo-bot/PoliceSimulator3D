@@ -142,6 +142,7 @@ jobs:
           timeout 60s "$GODOT_BIN" --headless --path . --script res://tests/test_traffic_vehicle.gd
           timeout 60s "$GODOT_BIN" --headless --path . --script res://tests/test_traffic_violation.gd
           timeout 60s "$GODOT_BIN" --headless --path . --script res://tests/test_traffic_light.gd
+          timeout 60s "$GODOT_BIN" --headless --path . --script res://tests/test_traffic_ai.gd
 
       - name: Parse all GDScript files
         shell: bash
