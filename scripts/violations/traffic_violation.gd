@@ -3,6 +3,8 @@ class_name TrafficViolation
 
 const SPEEDING_ID := "speeding"
 const SPEEDING_TITLE := "سرعت غیرمجاز"
+const RED_LIGHT_ID := "red_light"
+const RED_LIGHT_TITLE := "عبور از چراغ قرمز"
 
 static func create_speeding_evidence(observed_speed_kmh: float, speed_limit_kmh: float) -> Dictionary:
 	var excess_speed_kmh := maxf(0.0, observed_speed_kmh - speed_limit_kmh)
@@ -15,6 +17,8 @@ static func create_speeding_evidence(observed_speed_kmh: float, speed_limit_kmh:
 	}
 
 static func is_valid_evidence(evidence: Dictionary) -> bool:
+	if String(evidence.get("id", "")).strip_edges() == RED_LIGHT_ID:
+		return String(evidence.get("title", "")).strip_edges() == RED_LIGHT_TITLE and String(evidence.get("traffic_light_id", "")).strip_edges() != "" and evidence.has("stop_line_z")
 	var observed_speed := float(evidence.get("observed_speed_kmh", -1.0))
 	var speed_limit := float(evidence.get("speed_limit_kmh", -1.0))
 	var excess_speed := float(evidence.get("excess_speed_kmh", -1.0))
