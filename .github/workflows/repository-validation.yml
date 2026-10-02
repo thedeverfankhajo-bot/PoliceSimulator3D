@@ -45,6 +45,15 @@ jobs:
           test -f scripts/missions/mission.gd
           test -f scripts/missions/mission_manager.gd
 
+      - name: Validate Godot project structure without executing the engine
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f project.godot
+          grep -q '^config/name=' project.godot
+          grep -q '^run/main_scene=' project.godot
+          grep -q '^\[rendering\]' project.godot
+
       - name: Validate text files have no CRLF
         shell: bash
         run: |
