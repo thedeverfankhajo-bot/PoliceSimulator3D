@@ -25,7 +25,10 @@ var _saved_camera_pivot_position := Vector3.ZERO
 var _look_touch_id := -1
 
 func _ready() -> void:
-	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+	if OS.has_feature("mobile") or DisplayServer.is_touchscreen_available():
+		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+	else:
+		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 	_saved_collision_layer = collision_layer
 	_saved_collision_mask = collision_mask
 	_saved_camera_pivot_position = camera_pivot.position
