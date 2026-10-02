@@ -1,0 +1,38 @@
+name: Career regression
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+concurrency:
+  group: career-regression-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  career:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Run career regression test
+        shell: bash
+        run: |
+          set -euo pipefail
+          GODOT_VERSION="4.7.2"
+          ARCHIVE="Godot_v${GODOT_VERSION}-stable_linux.x86_64.zip"
+          URL="https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}-stable/${ARCHIVE}"
+          SHA256="cadd3204e728a35d3f13adb7fd0d7902636b79f6b95c40c265eb73b6c35329e4"
+          curl --fail --location --retry 3 --output "$ARCHIVE" "$URL"
+          printf '%s  %s\n' "$SHA256" "$ARCHIVE" | sha256sum --check --status
+          unzip -q "$ARCHIVE" -d .godot-ci
+          GODOT_BIN=".godot-ci/Godot_v${GODOT_VERSION}-stable_linux.x86_64"
+          chmod +x "$GODOT_BIN"
+          timeout 60s "$GODOT_BIN" --headless --path . --script res://tests/test_career_progression.gd
