@@ -87,6 +87,9 @@ func _check_violation() -> void:
 	_violation_reported = true
 	violation_detected.emit(self, "سرعت غیرمجاز")
 
+func has_reported_violation() -> bool:
+	return _violation_reported
+
 func stop_for_police() -> void:
 	if is_stopped:
 		return
