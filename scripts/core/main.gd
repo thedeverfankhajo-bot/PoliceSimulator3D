@@ -1,7 +1,10 @@
 extends Node3D
-## Minimal bootstrap for PoliceSimulator3D.
-## Keep the root scene responsible for composition, not gameplay rules.
+## Main world composition. Gameplay rules belong in isolated systems.
+
+@onready var player_spawn: Marker3D = $PlayerSpawn
 
 func _ready() -> void:
-    # Bootstrap only. Gameplay systems will be introduced as isolated modules.
-    pass
+	var player_scene := preload("res://scenes/player/player.tscn")
+	var player := player_scene.instantiate()
+	player.global_position = player_spawn.global_position
+	add_child(player)
