@@ -8,6 +8,7 @@ func _initialize() -> void:
 	vehicle.violation_detected.connect(func(_vehicle: TrafficVehicle, _violation: String) -> void:
 		violation_count += 1
 	)
+	assert(vehicle.get_traffic_velocity().length() > 0.0, "Traffic vehicle must have forward velocity.")
 	vehicle._check_violation()
 	assert(violation_count == 1, "Speeding vehicle must report exactly one violation.")
 	vehicle._check_violation()
