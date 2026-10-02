@@ -1,0 +1,14 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource path="res://scripts/core/main.gd" type="Script" id="1_main"]
+
+[node name="Main" type="Node3D"]
+script = ExtResource("1_main")
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
+rotation_degrees = Vector3(-45, -30, 0)
+shadow_enabled = true
+
+[node name="PlayerSpawn" type="Marker3D" parent="."]
