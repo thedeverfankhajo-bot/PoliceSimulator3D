@@ -136,6 +136,7 @@ func _build_city() -> void:
 
 	_add_sign(Vector3(4.8, 1.2, -2.8), "POLICE STOP")
 	_add_sign(Vector3(-4.8, 1.2, 10.0), "50")
+	_build_police_station()
 
 func _add_crosswalk(z: float, material: Material) -> void:
 	for x in [-3.2, -1.9, -0.6, 0.7, 2.0, 3.3]:
@@ -261,3 +262,17 @@ func _on_tutorial_opened() -> void:
 
 func _on_settings_opened() -> void:
 	hud.set_status("تنظیمات ذخیره شد و از فایل user://settings.cfg استفاده می‌کند.")
+
+
+func _build_police_station() -> void:
+	var wall := _material(Color(0.18, 0.22, 0.28), 0.72)
+	var trim := _material(Color(0.72, 0.76, 0.82), 0.55)
+	var glass := _material(Color(0.08, 0.18, 0.25), 0.18)
+	_add_static_box("PoliceStation", Vector3(10, 5.0, 12), Vector3(-12, 2.5, -28), wall)
+	_add_static_box("StationRoof", Vector3(10.6, 0.35, 12.6), Vector3(-12, 5.15, -28), trim)
+	for x in [-14.5, -11.5, -8.5]:
+		_add_static_box("StationWindow", Vector3(1.8, 1.7, 0.08), Vector3(x, 3.0, -21.95), glass, false)
+	for x in [-14.5, -11.5, -8.5]:
+		_add_static_box("GarageDoor", Vector3(2.5, 2.5, 0.12), Vector3(x, 1.3, -34.05), trim, false)
+	_add_sign(Vector3(-12, 6.0, -28), "POLICE")
+	_add_static_box("StationApron", Vector3(10.0, 0.05, 4.0), Vector3(-12, 0.03, -36), road_material if false else _material(Color(0.11, 0.12, 0.13), 0.9), false)

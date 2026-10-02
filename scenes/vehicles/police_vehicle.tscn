@@ -1,4 +1,4 @@
-[gd_scene load_steps=10 format=3]
+[gd_scene load_steps=15 format=3]
 
 [ext_resource type="Script" path="res://scripts/vehicles/police_vehicle.gd" id="1_vehicle"]
 
@@ -21,6 +21,25 @@ height = 0.22
 albedo_color = Color(0.015, 0.015, 0.018, 1)
 roughness = 0.9
 
+[sub_resource type="BoxMesh" id="BoxMesh_roof"]
+size = Vector3(1.5, 0.22, 1.0)
+[sub_resource type="StandardMaterial3D" id="Material_roof"]
+albedo_color = Color(0.035, 0.045, 0.07, 1)
+roughness = 0.35
+[sub_resource type="BoxMesh" id="BoxMesh_window"]
+size = Vector3(1.55, 0.42, 1.65)
+[sub_resource type="StandardMaterial3D" id="Material_window"]
+albedo_color = Color(0.035, 0.10, 0.14, 1)
+metallic = 0.15
+roughness = 0.2
+[sub_resource type="BoxMesh" id="BoxMesh_bar"]
+size = Vector3(1.35, 0.16, 0.34)
+[sub_resource type="StandardMaterial3D" id="Material_bar"]
+albedo_color = Color(0.85, 0.9, 0.95, 1)
+emission_enabled = true
+emission = Color(0.7, 0.8, 1, 1)
+emission_energy_multiplier = 2.0
+
 [node name="PoliceVehicle" type="VehicleBody3D" groups=["police_vehicle"]]
 script = ExtResource("1_vehicle")
 mass = 1400.0
@@ -35,6 +54,21 @@ shape = SubResource("BoxShape_vehicle")
 position = Vector3(0, 0.6, 0)
 mesh = SubResource("BoxMesh_vehicle")
 material_override = SubResource("Material_vehicle")
+
+[node name="Roof" type="MeshInstance3D" parent="."]
+position = Vector3(0, 1.35, 0.0)
+mesh = SubResource("BoxMesh_roof")
+material_override = SubResource("Material_roof")
+
+[node name="WindowBand" type="MeshInstance3D" parent="."]
+position = Vector3(0, 1.05, -0.15)
+mesh = SubResource("BoxMesh_window")
+material_override = SubResource("Material_window")
+
+[node name="LightBar" type="MeshInstance3D" parent="."]
+position = Vector3(0, 1.5, -0.05)
+mesh = SubResource("BoxMesh_bar")
+material_override = SubResource("Material_bar")
 
 [node name="FrontLeftWheel" type="VehicleWheel3D" parent="."]
 position = Vector3(-0.85, 0.38, -1.35)
