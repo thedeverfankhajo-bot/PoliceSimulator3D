@@ -42,6 +42,6 @@ func _on_mission_completed() -> void:
 func _on_mission_failed(reason: String) -> void:
 	if active_mission == null:
 		return
-	var mission: Mission = active_mission
+	var mission = active_mission
 	active_mission = null
 	mission_failed.emit(mission, reason)
