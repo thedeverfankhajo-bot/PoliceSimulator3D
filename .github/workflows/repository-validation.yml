@@ -87,6 +87,9 @@ jobs:
           grep -q 'enter_patrol_vehicle' scripts/missions/traffic_stop_scenario.gd
           grep -q 'TRAFFIC_VEHICLE_SCENE' scripts/core/main.gd
           grep -q 'violation_detected.connect(_on_traffic_violation)' scripts/core/main.gd
+          grep -q 'func _release_brake' scripts/ui/mobile_controls.gd
+          grep -q 'Input.action_press("vehicle_brake")' scripts/ui/mobile_controls.gd
+          grep -q 'var touch_device := OS.has_feature("mobile") or DisplayServer.is_touchscreen_available()' scripts/player/interaction_detector.gd
           grep -q 'OS.has_feature("mobile") or DisplayServer.is_touchscreen_available()' scripts/player/interaction_detector.gd
           grep -q 'func _set_axis_action' scripts/ui/mobile_controls.gd
           grep -q 'func get_control_input' scripts/vehicles/police_vehicle.gd
