@@ -8,8 +8,12 @@ func _fail(message: String) -> void:
 
 func _initialize() -> void:
 	var vehicle = TRAFFIC_VEHICLE_SCRIPT.new()
-	if vehicle.get_traffic_velocity().length() <= 0.0:
+	var forward_velocity := vehicle.get_traffic_velocity()
+	if forward_velocity.length() <= 0.0:
 		_fail("Traffic vehicle must have forward velocity.")
+		return
+	if forward_velocity.z >= 0.0:
+		_fail("Traffic vehicle must travel toward the loop end on negative Z.")
 		return
 	vehicle._check_violation()
 	if not vehicle._violation_reported:
