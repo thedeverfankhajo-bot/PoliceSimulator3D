@@ -18,11 +18,22 @@ func _physics_process(_delta: float) -> void:
 		brake = max_brake_force
 		return
 
+	var controls := get_control_input()
+	engine_force = controls.y * max_engine_force
+	steering = controls.x * steering_limit
+	brake = max_brake_force if Input.is_action_pressed("vehicle_brake") else 0.0
+
+func get_control_input() -> Vector2:
+	# Vehicle-specific actions remain the primary desktop/gamepad mapping.
+	# The player movement actions are a deliberate fallback so the same
+	# virtual joystick can drive the patrol vehicle on touch devices.
 	var throttle := Input.get_axis("vehicle_reverse", "vehicle_accelerate")
 	var steer_input := Input.get_axis("vehicle_left", "vehicle_right")
-	engine_force = throttle * max_engine_force
-	steering = steer_input * steering_limit
-	brake = max_brake_force if Input.is_action_pressed("vehicle_brake") else 0.0
+	if is_zero_approx(throttle):
+		throttle = Input.get_axis("move_backward", "move_forward")
+	if is_zero_approx(steer_input):
+		steer_input = Input.get_axis("move_left", "move_right")
+	return Vector2(steer_input, throttle)
 
 func interact() -> void:
 	if is_occupied:
