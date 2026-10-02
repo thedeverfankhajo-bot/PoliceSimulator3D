@@ -11,7 +11,6 @@ const SCENARIO_SCRIPT := preload("res://scripts/missions/traffic_stop_scenario.g
 const TRAFFIC_LIGHT_SCRIPT := preload("res://scripts/traffic/traffic_light.gd")
 const TRAFFIC_AI_SCRIPT := preload("res://scripts/traffic/traffic_ai_controller.gd")
 const CAREER_SCRIPT := preload("res://scripts/core/career_progression.gd")
-const CAREER_SCRIPT := preload("res://scripts/core/career_progression.gd")
 
 @onready var player_spawn: Marker3D = $PlayerSpawn
 @onready var hud: CanvasLayer = $StatusHUD
