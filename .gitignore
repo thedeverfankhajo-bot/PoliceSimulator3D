@@ -1,0 +1,52 @@
+# Godot 4+ generated/imported data
+.godot/
+
+# Godot export credentials and local editor state
+export_credentials.cfg
+export_credentials.cfg.*
+
+# Build/export output
+build/
+builds/
+exports/
+*.apk
+*.aab
+*.ipa
+*.exe
+*.app
+*.pck
+*.zip
+
+# IDE/editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# OS / temporary files
+*.tmp
+*.temp
+*.log
+
+# Android signing material — NEVER commit
+*.keystore
+*.jks
+*.p12
+*.pem
+*.pk8
+
+# Local environment / secrets
+.env
+.env.*
+!.env.example
+secrets/
+
+# Coverage / test output
+coverage/
+.pytest_cache/
+
+# Blender temporary/backup files if Blender is used for assets
+*.blend1
+*.blend2
