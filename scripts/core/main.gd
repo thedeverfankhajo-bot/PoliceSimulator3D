@@ -8,10 +8,10 @@ const TRAFFIC_VEHICLE_SCENE := preload("res://scenes/vehicles/traffic_vehicle.ts
 const SCENARIO_SCRIPT := preload("res://scripts/missions/traffic_stop_scenario.gd")
 
 @onready var player_spawn: Marker3D = $PlayerSpawn
-@onready var hud: StatusHud = $StatusHUD
+@onready var hud: CanvasLayer = $StatusHUD
 
-var mission_manager: MissionManager
-var player: PlayerController
+var mission_manager: Node
+var player: CharacterBody3D
 
 func _ready() -> void:
 	player = PLAYER_SCENE.instantiate()
@@ -19,16 +19,16 @@ func _ready() -> void:
 	add_child(player)
 	player.vehicle_exit_blocked.connect(_on_vehicle_exit_blocked)
 
-	var vehicle: PoliceVehicle = VEHICLE_SCENE.instantiate()
+	var vehicle = VEHICLE_SCENE.instantiate()
 	vehicle.global_position = Vector3(0, 0, -8)
 	add_child(vehicle)
 	vehicle.entered.connect(player.enter_vehicle)
 
-	var npc: CivilianNPC = NPC_SCENE.instantiate()
+	var npc = NPC_SCENE.instantiate()
 	npc.global_position = Vector3(3, 0, -8)
 	add_child(npc)
 
-	var traffic_vehicle: TrafficVehicle = TRAFFIC_VEHICLE_SCENE.instantiate()
+	var traffic_vehicle = TRAFFIC_VEHICLE_SCENE.instantiate()
 	traffic_vehicle.global_position = Vector3(0, 0.65, 18)
 	add_child(traffic_vehicle)
 	traffic_vehicle.violation_detected.connect(_on_traffic_violation)
@@ -48,11 +48,11 @@ func _ready() -> void:
 		return
 	hud.show_mission(scenario.mission)
 
-func _on_mission_completed(mission: Mission) -> void:
+func _on_mission_completed(mission) -> void:
 	hud.set_status("ماموریت کامل شد: %s" % mission.title)
 
 func _on_vehicle_exit_blocked() -> void:
 	push_warning("Vehicle exit blocked: no safe space for the player.")
 
-func _on_traffic_violation(_vehicle: TrafficVehicle, violation: String) -> void:
+func _on_traffic_violation(_vehicle, violation: String) -> void:
 	hud.set_status("تخلف ثبت شد: %s" % violation)
