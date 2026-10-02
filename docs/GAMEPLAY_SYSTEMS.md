@@ -2,17 +2,29 @@
 
 ## Traffic violations
 
-The traffic system now records structured evidence for the currently playable speeding violation. Evidence contains a stable identifier, human-readable title, observed speed, configured speed limit, and calculated excess speed.
+Traffic violations use structured evidence instead of passing only a display string between systems.
 
-The current playable flow is:
-1. The traffic vehicle moves along its route.
-2. The configured traffic speed is checked against the speed limit.
-3. Speeding is recorded once and emitted as both legacy HUD text and structured evidence.
-4. The traffic-stop mission requires the confirmed violation before the stop objective can complete.
-5. The player can interact with the civilian after the stop and complete the mission.
+### Current playable flow
 
-Other violation identifiers should not be treated as playable until a deterministic world detector, public state, mission integration, HUD feedback, and automated headless coverage exist.
+1. A traffic vehicle moves along its route.
+2. The vehicle checks its configured speed against the speed limit.
+3. A validated speeding evidence object is created once.
+4. The evidence is emitted through violation_evidence_detected.
+5. The traffic-stop scenario validates and stores that evidence.
+6. The mission's stop objective requires both a confirmed violation and valid evidence.
+7. The main HUD can display the measured speed and configured limit.
+8. After the stop, the player interacts with the civilian to finish the mission.
 
-## Verification
+### Separation of responsibilities
 
-Godot headless tests cover the violation data model and the traffic vehicle's structured evidence. CI also parses all GDScript and smoke-tests the main scene.
+- scripts/violations/traffic_violation.gd owns evidence construction and validation.
+- scripts/vehicles/traffic_vehicle.gd owns the physical facts needed to detect speeding.
+- scripts/missions/traffic_stop_scenario.gd consumes validated evidence and controls mission progression.
+- scripts/core/main.gd composes systems and forwards user-facing feedback to the HUD.
+- scripts/ui/status_hud.gd renders mission state.
+
+This keeps mission logic from reaching into unrelated vehicle physics state.
+
+## Adding another violation
+
+A new violation should not be considered playable merely because an enum or data entry exists. It needs a deterministic detector, a documented evidence shape, mission integration, HUD feedback where appropriate, and headless automated coverage.
