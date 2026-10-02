@@ -15,10 +15,13 @@ static func create_speeding_evidence(observed_speed_kmh: float, speed_limit_kmh:
 	}
 
 static func is_valid_evidence(evidence: Dictionary) -> bool:
-	return (
-		String(evidence.get("id", "")).strip_edges() == SPEEDING_ID
-		and String(evidence.get("title", "")).strip_edges() == SPEEDING_TITLE
-		and float(evidence.get("observed_speed_kmh", -1.0)) >= 0.0
-		and float(evidence.get("speed_limit_kmh", -1.0)) >= 0.0
-		and float(evidence.get("excess_speed_kmh", -1.0)) >= 0.0
-	)
+	var observed_speed := float(evidence.get("observed_speed_kmh", -1.0))
+	var speed_limit := float(evidence.get("speed_limit_kmh", -1.0))
+	var excess_speed := float(evidence.get("excess_speed_kmh", -1.0))
+	if String(evidence.get("id", "")).strip_edges() != SPEEDING_ID:
+		return false
+	if String(evidence.get("title", "")).strip_edges() != SPEEDING_TITLE:
+		return false
+	if observed_speed < 0.0 or speed_limit < 0.0 or excess_speed < 0.0:
+		return false
+	return is_equal_approx(excess_speed, maxf(0.0, observed_speed - speed_limit))
