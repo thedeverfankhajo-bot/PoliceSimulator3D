@@ -8,6 +8,7 @@ const VEHICLE_SCENE := preload("res://scenes/vehicles/police_vehicle.tscn")
 const NPC_SCENE := preload("res://scenes/npcs/civilian_npc.tscn")
 const TRAFFIC_VEHICLE_SCENE := preload("res://scenes/vehicles/traffic_vehicle.tscn")
 const SCENARIO_SCRIPT := preload("res://scripts/missions/traffic_stop_scenario.gd")
+const TRAFFIC_LIGHT_SCRIPT := preload("res://scripts/traffic/traffic_light.gd")
 
 @onready var player_spawn: Marker3D = $PlayerSpawn
 @onready var hud: CanvasLayer = $StatusHUD
@@ -34,8 +35,19 @@ func _spawn_gameplay() -> void:
 	add_child(npc)
 	npc.global_position = Vector3(3, 0, -8)
 
+	var traffic_light := TRAFFIC_LIGHT_SCRIPT.new()
+	traffic_light.name = "IntersectionTrafficLight"
+	traffic_light.light_id = "intersection_001"
+	traffic_light.stop_line_z = -3.0
+	traffic_light.cycle_green_seconds = 2.0
+	traffic_light.cycle_red_seconds = 5.0
+	traffic_light.position = Vector3(4.5, 0.0, -3.0)
+	add_child(traffic_light)
+	_add_traffic_light_visual(traffic_light)
+
 	var traffic_vehicle = TRAFFIC_VEHICLE_SCENE.instantiate()
 	add_child(traffic_vehicle)
+	traffic_vehicle.traffic_light = traffic_light
 	traffic_vehicle.global_position = Vector3(0, 0.65, 18)
 	traffic_vehicle.violation_detected.connect(_on_traffic_violation)
 
@@ -128,6 +140,18 @@ func _add_static_box(node_name: String, box_size: Vector3, position: Vector3, ma
 	holder.add_child(mesh)
 	holder.position = position
 	return holder
+
+func _add_traffic_light_visual(light_controller: Node3D) -> void:
+	var pole_material := _material(Color(0.07, 0.08, 0.09), 0.8)
+	_add_static_box("TrafficLightPole", Vector3(0.12, 3.2, 0.12), light_controller.position + Vector3(0, 1.6, 0), pole_material)
+	var red := OmniLight3D.new()
+	red.name = "RedLamp"
+	red.position = light_controller.position + Vector3(0, 3.2, 0)
+	red.omni_range = 2.5
+	red.light_energy = 0.0
+	red.shadow_enabled = false
+	light_controller.add_child(red)
+	light_controller.state_changed.connect(func(is_red: bool): red.light_energy = 2.0 if is_red else 0.0)
 
 func _add_street_light(position: Vector3) -> void:
 	var pole_material := _material(Color(0.08, 0.09, 0.1), 0.8)
