@@ -32,15 +32,18 @@ func _unhandled_input(event: InputEvent) -> void:
 		return
 	if event is InputEventScreenTouch:
 		_handle_touch(event)
-	elif event is InputEventScreenDrag:
-		_handle_drag(event)
+	elif event is InputEventScreenDrag and event.index == _joystick_id:
+		_update_joystick(event.position)
+		get_viewport().set_input_as_handled()
 
 func _handle_touch(event: InputEventScreenTouch) -> void:
 	if event.canceled:
 		if event.index == _joystick_id:
 			_release_movement()
-		if event.index == _action_id:
+			get_viewport().set_input_as_handled()
+		elif event.index == _action_id:
 			_release_action()
+			get_viewport().set_input_as_handled()
 		return
 
 	if event.pressed:
@@ -48,18 +51,18 @@ func _handle_touch(event: InputEventScreenTouch) -> void:
 			_joystick_id = event.index
 			_joystick_origin = event.position
 			_update_joystick(event.position)
+			get_viewport().set_input_as_handled()
 		elif _action_id == -1 and event.position.distance_to(_action_center) <= action_radius * 1.25:
 			_action_id = event.index
 			Input.action_press("interact")
+			get_viewport().set_input_as_handled()
 	else:
 		if event.index == _joystick_id:
 			_release_movement()
+			get_viewport().set_input_as_handled()
 		elif event.index == _action_id:
 			_release_action()
-
-func _handle_drag(event: InputEventScreenDrag) -> void:
-	if event.index == _joystick_id:
-		_update_joystick(event.position)
+			get_viewport().set_input_as_handled()
 
 func _is_joystick_area(position: Vector2) -> bool:
 	return position.x <= size.x * 0.48 and position.y >= size.y * 0.48
