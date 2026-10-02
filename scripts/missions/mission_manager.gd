@@ -18,7 +18,7 @@ func start_mission(mission) -> bool:
 
 	_starting_mission = true
 	active_mission = mission
-	var started := mission.start()
+	var started: bool = mission.start()
 	_starting_mission = false
 	if not started:
 		if active_mission == mission:
