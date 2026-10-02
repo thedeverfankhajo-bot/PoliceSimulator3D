@@ -27,14 +27,25 @@ func start(mission_manager: MissionManager) -> bool:
 		return false
 	if not mission_manager.start_mission(mission):
 		return false
-	vehicle.entered.connect(_on_vehicle_interacted, CONNECT_ONE_SHOT)
-	npc.interacted.connect(_on_npc_interacted, CONNECT_ONE_SHOT)
+	vehicle.entered.connect(_on_vehicle_interacted)
+	npc.interacted.connect(_on_npc_interacted)
+	mission.completed.connect(_on_mission_completed, CONNECT_ONE_SHOT)
 	return true
 
 func _on_vehicle_interacted(_vehicle: PoliceVehicle) -> void:
-	if mission != null:
-		mission.complete_objective(0)
+	if mission == null or mission.status != MissionState.Status.ACTIVE:
+		return
+	mission.complete_objective(0)
 
 func _on_npc_interacted(_npc: CivilianNPC) -> void:
-	if mission != null:
-		mission.complete_objective(1)
+	if mission == null or mission.status != MissionState.Status.ACTIVE:
+		return
+	if not mission.is_objective_completed(0):
+		return
+	mission.complete_objective(1)
+
+func _on_mission_completed() -> void:
+	if is_instance_valid(npc) and npc.interacted.is_connected(_on_npc_interacted):
+		npc.interacted.disconnect(_on_npc_interacted)
+	if is_instance_valid(vehicle) and vehicle.entered.is_connected(_on_vehicle_interacted):
+		vehicle.entered.disconnect(_on_vehicle_interacted)
