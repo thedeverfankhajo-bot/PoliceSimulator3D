@@ -95,6 +95,7 @@ func _initialize() -> void:
 	if manager.active_mission != null:
 		_fail("Mission manager must clear active mission after failure.")
 		return
+	manager.free()
 
 	print("Mission tests passed.")
 	quit(0)
