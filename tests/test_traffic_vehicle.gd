@@ -3,9 +3,9 @@ extends SceneTree
 const TRAFFIC_VEHICLE_SCRIPT := preload("res://scripts/vehicles/traffic_vehicle.gd")
 
 func _initialize() -> void:
-	var vehicle: TrafficVehicle = TRAFFIC_VEHICLE_SCRIPT.new()
+	var vehicle = TRAFFIC_VEHICLE_SCRIPT.new()
 	var violation_count := 0
-	vehicle.violation_detected.connect(func(_vehicle: TrafficVehicle, _violation: String) -> void:
+	vehicle.violation_detected.connect(func(_vehicle, _violation: String) -> void:
 		violation_count += 1
 	)
 	assert(vehicle.get_traffic_velocity().length() > 0.0, "Traffic vehicle must have forward velocity.")
