@@ -10,7 +10,11 @@ config/description="A modular 3D police simulation game."
 run/main_scene="res://scenes/main/main.tscn"
 config/features=PackedStringArray("4.7", "Mobile")
 
-[autoload]\nGameSettings="*res://scripts/core/game_settings.gd"\nSaveManager="*res://scripts/core/save_manager.gd"\n\n[display]
+[autoload]
+GameSettings="*res://scripts/core/game_settings.gd"
+SaveManager="*res://scripts/core/save_manager.gd"
+
+[display]
 window/size/viewport_width=1280
 window/size/viewport_height=720
 window/size/window_width_override=1280
