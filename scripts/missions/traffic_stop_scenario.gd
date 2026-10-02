@@ -73,6 +73,8 @@ func _on_traffic_vehicle_stopped(stopped_vehicle) -> void:
 		return
 	if stopped_vehicle != traffic_vehicle:
 		return
+	if not traffic_vehicle.has_method("has_reported_violation") or not traffic_vehicle.has_reported_violation():
+		return
 	mission.complete_objective(1)
 
 func _on_npc_interacted(interacted_npc) -> void:
