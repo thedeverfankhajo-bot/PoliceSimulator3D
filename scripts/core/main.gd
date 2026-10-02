@@ -39,7 +39,7 @@ func _ready() -> void:
 
 	var scenario := SCENARIO_SCRIPT.new()
 	add_child(scenario)
-	if not scenario.setup(vehicle, npc):
+	if not scenario.setup(vehicle, traffic_vehicle, npc):
 		push_error("Traffic stop scenario failed to configure.")
 		scenario.queue_free()
 		return
