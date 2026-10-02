@@ -204,7 +204,7 @@ func _material(color: Color, roughness: float) -> StandardMaterial3D:
 
 func _on_mission_completed(mission) -> void:
 	career.add_xp(100)
-	SaveManager.save_game(player, career, true)
+	$SaveManager.save_game(player, career, true)
 	hud.show_mission(mission)
 	hud.set_status("ماموریت کامل شد: %s — +100 XP — رتبه: %s" % [mission.title, career.get_rank()])
 
@@ -236,24 +236,24 @@ func _setup_autosave() -> void:
 	add_child(_autosave_timer)
 
 func _autosave() -> void:
-	if bool(GameSettings.get_value("gameplay/auto_save")) and is_instance_valid(player):
-		SaveManager.save_game(player, career, scenario != null and scenario.mission != null and scenario.mission.status == 2)
+	if bool($GameSettings.get_value("gameplay/auto_save")) and is_instance_valid(player):
+		$SaveManager.save_game(player, career, scenario != null and scenario.mission != null and scenario.mission.status == 2)
 
 func _start_new_game() -> void:
 	career.xp = 0
-	SaveManager.delete_save()
+	$SaveManager.delete_save()
 	if is_instance_valid(player):
 		player.global_position = player_spawn.global_position
 	main_menu.close_menu()
 	hud.set_status("بازی جدید شروع شد. مأموریت اول را انجام بده.")
 
 func _continue_game() -> void:
-	if not SaveManager.load_game():
+	if not $SaveManager.load_game():
 		_start_new_game()
 		return
-	career.xp = int(SaveManager.data.get("xp", 0))
+	career.xp = int($SaveManager.data.get("xp", 0))
 	if is_instance_valid(player):
-		player.global_position = SaveManager.data.get("last_position", player_spawn.global_position)
+		player.global_position = $SaveManager.data.get("last_position", player_spawn.global_position)
 	main_menu.close_menu()
 	hud.set_status("بازی ادامه یافت — رتبه: %s — XP: %d" % [career.get_rank(), career.xp])
 
