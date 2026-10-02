@@ -4,6 +4,7 @@ extends Node3D
 const PLAYER_SCENE := preload("res://scenes/player/player.tscn")
 const VEHICLE_SCENE := preload("res://scenes/vehicles/police_vehicle.tscn")
 const NPC_SCENE := preload("res://scenes/npcs/civilian_npc.tscn")
+const TRAFFIC_VEHICLE_SCENE := preload("res://scenes/vehicles/traffic_vehicle.tscn")
 const SCENARIO_SCRIPT := preload("res://scripts/missions/traffic_stop_scenario.gd")
 
 @onready var player_spawn: Marker3D = $PlayerSpawn
@@ -23,7 +24,8 @@ func _ready() -> void:
 	add_child(vehicle)
 	vehicle.entered.connect(player.enter_vehicle)
 
-	var npc: CivilianNPC = NPC_SCENE.instantiate()
+	var npc: CivilianNPC
+var traffic_vehicle: TrafficVehicle = NPC_SCENE.instantiate()
 	npc.global_position = Vector3(3, 0, -8)
 	add_child(npc)
 
@@ -47,3 +49,6 @@ func _on_mission_completed(mission: Mission) -> void:
 
 func _on_vehicle_exit_blocked() -> void:
 	push_warning("Vehicle exit blocked: no safe space for the player.")
+
+func _on_traffic_violation(_vehicle: TrafficVehicle, violation: String) -> void:
+	hud.set_status("تخلف ثبت شد: %s" % violation)
