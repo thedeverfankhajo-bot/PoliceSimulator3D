@@ -89,7 +89,7 @@ func exit_vehicle() -> void:
 		return
 
 	var vehicle := _active_vehicle
-	var exit_position := vehicle.get_exit_position()
+	var exit_position: Vector3 = vehicle.get_exit_position()
 	if not _is_exit_position_clear(exit_position, vehicle):
 		vehicle_exit_blocked.emit()
 		return
