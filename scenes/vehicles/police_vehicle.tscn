@@ -95,5 +95,11 @@ position = Vector3(0.85, 0.38, 1.35)
 rotation_degrees = Vector3(0, 0, 90)
 mesh = SubResource("WheelMesh")
 material_override = SubResource("WheelMaterial")
+[node name="SirenLight" type="OmniLight3D" parent="."]
+position = Vector3(0, 1.45, -0.15)
+omni_range = 7.0
+light_energy = 0.0
+shadow_enabled = false
+
 [node name="ExitPoint" type="Marker3D" parent="."]
 position = Vector3(2.2, 0.0, 0.0)
