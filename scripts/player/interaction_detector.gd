@@ -3,17 +3,17 @@ class_name InteractionDetector
 
 @export var interaction_distance: float = 3.0
 @export_flags_3d_physics var collision_mask: int = 1
-@onready var camera: Camera3D = $Camera3D
+@onready var camera: Camera3D = get_parent().get_node_or_null("Camera3D") as Camera3D
 
 signal interacted(target: Node)
 signal interaction_missed()
 
 func _physics_process(_delta: float) -> void:
-	if Input.is_action_just_pressed("interact"):
+	if Input.mouse_mode == Input.MOUSE_MODE_CAPTURED and Input.is_action_just_pressed("interact"):
 		try_interact()
 
 func try_interact() -> void:
-	if camera == null:
+	if camera == null or not is_inside_tree():
 		interaction_missed.emit()
 		return
 
