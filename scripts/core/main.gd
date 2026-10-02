@@ -44,6 +44,7 @@ func _ready() -> void:
 		push_error("Traffic stop scenario failed to configure.")
 		scenario.queue_free()
 		return
+	scenario.violation_evidence_confirmed.connect(_on_violation_evidence_confirmed)
 	if not scenario.start(mission_manager):
 		push_error("Traffic stop scenario failed to start.")
 		return
@@ -62,3 +63,12 @@ func _on_vehicle_exit_blocked() -> void:
 
 func _on_traffic_violation(_vehicle, violation: String) -> void:
 	hud.set_status("تخلف ثبت شد: %s" % violation)
+
+func _on_violation_evidence_confirmed(evidence: Dictionary) -> void:
+	var observed := float(evidence.get("observed_speed_kmh", 0.0))
+	var limit := float(evidence.get("speed_limit_kmh", 0.0))
+	hud.set_status("مدرک تخلف تأیید شد: %s — %.1f / %.1f km/h" % [
+		String(evidence.get("title", "تخلف")),
+		observed,
+		limit
+	])
