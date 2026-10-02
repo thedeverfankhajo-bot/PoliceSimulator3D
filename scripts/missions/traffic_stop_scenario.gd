@@ -4,9 +4,9 @@ class_name TrafficStopScenario
 @export var mission_title := "اولین توقف ترافیکی"
 @export_multiline var mission_description := "سوار خودروی پلیس شو، به شهروند نزدیک شو و با او تعامل کن."
 
-var mission: Mission
-var vehicle: PoliceVehicle
-var npc: CivilianNPC
+var mission
+var vehicle: Node
+var npc: Node
 
 func setup(target_vehicle: PoliceVehicle, target_npc: CivilianNPC) -> bool:
 	if target_vehicle == null or target_npc == null:
