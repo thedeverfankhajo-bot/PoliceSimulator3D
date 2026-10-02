@@ -1,6 +1,7 @@
-[gd_scene load_steps=5 format=3]
+[gd_scene load_steps=6 format=3]
 
 [ext_resource type="Script" path="res://scripts/player/player_controller.gd" id="1_player"]
+[ext_resource type="Script" path="res://scripts/player/interaction_detector.gd" id="2_interaction"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape_player"]
 radius = 0.45
@@ -29,3 +30,6 @@ current = true
 fov = 70.0
 near = 0.05
 far = 500.0
+
+[node name="InteractionDetector" type="Node3D" parent="CameraPivot"]
+script = ExtResource("2_interaction")
