@@ -24,10 +24,14 @@ func _ready() -> void:
 	add_child(vehicle)
 	vehicle.entered.connect(player.enter_vehicle)
 
-	var npc: CivilianNPC
-var traffic_vehicle: TrafficVehicle = NPC_SCENE.instantiate()
+	var npc: CivilianNPC = NPC_SCENE.instantiate()
 	npc.global_position = Vector3(3, 0, -8)
 	add_child(npc)
+
+	var traffic_vehicle: TrafficVehicle = TRAFFIC_VEHICLE_SCENE.instantiate()
+	traffic_vehicle.global_position = Vector3(0, 0.65, 18)
+	add_child(traffic_vehicle)
+	traffic_vehicle.violation_detected.connect(_on_traffic_violation)
 
 	mission_manager = MissionManager.new()
 	add_child(mission_manager)
