@@ -117,7 +117,7 @@ jobs:
           grep -Fq 'uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262' .github/workflows/android-apk.yml
           grep -Fq 'uses: actions/setup-java@c5195efecf7bdfc987ee8bae7a71cb8b11521c00' .github/workflows/android-apk.yml
           grep -Fq 'uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02' .github/workflows/android-apk.yml
-          grep -q 'name="Android Debug"' export_presets.cfg
+          grep -q 'name="Android Debug APK"' export_presets.cfg
           grep -q 'platform="Android"' export_presets.cfg
           grep -q 'package/unique_name="com.policesimulator3d.game"' export_presets.cfg
 
