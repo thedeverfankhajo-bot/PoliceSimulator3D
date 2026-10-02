@@ -12,8 +12,8 @@ func _physics_process(_delta: float) -> void:
 	if Input.is_action_just_pressed("interact"):
 		# Desktop requires a captured mouse for the interaction key, while
 		# touch devices drive the same action through the mobile UI.
-		var mobile_input := OS.has_feature("mobile") or DisplayServer.is_touchscreen_available()
-		if mobile_input or Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
+		var touch_device := OS.has_feature("mobile") or DisplayServer.is_touchscreen_available()
+		if touch_device or Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
 			try_interact()
 
 func try_interact() -> void:
