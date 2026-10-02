@@ -1,0 +1,46 @@
+name: Repository validation
+
+on:
+  push:
+    branches: [ "main", "feature/bootstrap-godot-project" ]
+  pull_request:
+    branches: [ "main" ]
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Reject obvious secret/signing files
+        shell: bash
+        run: |
+          set -euo pipefail
+          forbidden='(\.env($|\.)|\.pem$|\.p12$|\.pk8$|\.jks$|\.keystore$|export_credentials\.cfg$)'
+          if git ls-files | grep -E "$forbidden"; then
+            echo "Forbidden secret/signing file detected."
+            exit 1
+          fi
+
+      - name: Validate required project files
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f project.godot
+          test -f scenes/main/main.tscn
+          test -f scripts/core/main.gd
+          test -f scripts/player/player_controller.gd
+          test -f scripts/player/interaction_detector.gd
+
+      - name: Validate text files have no CRLF
+        shell: bash
+        run: |
+          set -euo pipefail
+          if git grep -Il '' -- ':!*.png' ':!*.jpg' ':!*.jpeg' ':!*.webp' ':!*.ogg' ':!*.wav' ':!*.mp3' | xargs -r grep -Il $'\r'; then
+            echo "CRLF detected in a tracked text file."
+            exit 1
+          fi
