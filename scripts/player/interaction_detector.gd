@@ -22,6 +22,7 @@ func try_interact() -> void:
 	var query := PhysicsRayQueryParameters3D.create(from, to, collision_mask)
 	query.collide_with_areas = true
 	query.collide_with_bodies = true
+	query.exclude = [get_parent().get_parent().get_rid()]
 	var result := get_world_3d().direct_space_state.intersect_ray(query)
 	if result.is_empty():
 		interaction_missed.emit()
@@ -29,9 +30,17 @@ func try_interact() -> void:
 
 	var collider: Variant = result.get("collider")
 	if collider is Node:
-		var target: Node = collider
-		if target.has_method("interact"):
+		var target := _find_interactable(collider as Node)
+		if target != null:
 			target.interact()
 			interacted.emit(target)
 			return
 	interaction_missed.emit()
+
+func _find_interactable(start: Node) -> Node:
+	var current: Node = start
+	while current != null:
+		if current.has_method("interact"):
+			return current
+		current = current.get_parent()
+	return null
