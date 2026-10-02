@@ -41,7 +41,7 @@ func _on_vehicle_entered(_vehicle) -> void:
 	mission.complete_objective(0)
 
 func _on_npc_interacted(_npc) -> void:
-	if mission == null or mission.status != MissionState.Status.ACTIVE:
+	if mission == null or mission.status != preload("res://scripts/missions/mission_state.gd").Status.ACTIVE:
 		return
 	if not mission.is_objective_completed(0):
 		return
