@@ -25,7 +25,7 @@ jobs:
     timeout-minutes: 20
     steps:
       - name: Checkout repository
-        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
 
@@ -65,14 +65,15 @@ jobs:
           ARCHIVE="Godot_v${GODOT_VERSION}-stable_export_templates.tpz"
           URL="https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}-stable/${ARCHIVE}"
           curl --fail --location --retry 3 --output "$ARCHIVE" "$URL"
-                    mkdir -p "$HOME/.local/share/godot/export_templates/${GODOT_VERSION}.stable"
+          mkdir -p "$HOME/.local/share/godot/export_templates/${GODOT_VERSION}.stable"
           unzip -q "$ARCHIVE" -d .godot-templates
           cp -a .godot-templates/templates/. "$HOME/.local/share/godot/export_templates/${GODOT_VERSION}.stable/"
 
-      - name: Export debug APK
+      - name: Export one debug APK
         shell: bash
         run: |
           set -euo pipefail
+          rm -rf build
           mkdir -p build
           GODOT_BIN=".godot-ci/Godot_v4.7.2-stable_linux.x86_64"
           timeout 180s "$GODOT_BIN" --headless --path . --export-debug "Android Debug" build/PoliceSimulator3D-debug.apk
@@ -86,6 +87,7 @@ jobs:
           file build/PoliceSimulator3D-debug.apk
           unzip -tq build/PoliceSimulator3D-debug.apk
           "$ANDROID_HOME/build-tools/35.0.1/apksigner" verify --verbose build/PoliceSimulator3D-debug.apk
+          sha256sum build/PoliceSimulator3D-debug.apk
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
