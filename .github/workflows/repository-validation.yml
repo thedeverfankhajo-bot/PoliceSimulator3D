@@ -96,6 +96,28 @@ jobs:
           grep -q '^permissions:' .github/workflows/repository-validation.yml
           grep -q 'contents: read' .github/workflows/repository-validation.yml
 
+      - name: Run Godot mission tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          GODOT_VERSION="4.7.2"
+          GODOT_ARCHIVE="Godot_v${GODOT_VERSION}-stable_linux.x86_64.zip"
+          GODOT_URL="https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}-stable/${GODOT_ARCHIVE}"
+          GODOT_SHA256="cadd3204e728a35d3f13adb7fd0d7902636b79f6b95c40c265eb73b6c35329e4"
+          curl --fail --location --retry 3 --output "$GODOT_ARCHIVE" "$GODOT_URL"
+          printf '%s  %s\n' "$GODOT_SHA256" "$GODOT_ARCHIVE" | sha256sum --check --status
+          unzip -q "$GODOT_ARCHIVE" -d .godot-ci
+          GODOT_BIN=".godot-ci/Godot_v${GODOT_VERSION}-stable_linux.x86_64"
+          chmod +x "$GODOT_BIN"
+          "$GODOT_BIN" --headless --path . --script res://tests/test_mission.gd
+
+      - name: Smoke test main scene
+        shell: bash
+        run: |
+          set -euo pipefail
+          GODOT_BIN=".godot-ci/Godot_v4.7.2-stable_linux.x86_64"
+          "$GODOT_BIN" --headless --path . --quit-after 120
+
       - name: Validate text files have no CRLF
         shell: bash
         run: |
