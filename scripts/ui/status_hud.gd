@@ -3,12 +3,12 @@ class_name StatusHud
 
 @onready var status_label: Label = $Status
 
-var _mission: Mission
+var _mission
 
 func set_status(message: String) -> void:
 	status_label.text = message
 
-func show_mission(mission: Mission) -> void:
+func show_mission(mission) -> void:
 	if _mission != null and is_instance_valid(_mission):
 		if _mission.objective_completed.is_connected(_on_objective_completed):
 			_mission.objective_completed.disconnect(_on_objective_completed)
