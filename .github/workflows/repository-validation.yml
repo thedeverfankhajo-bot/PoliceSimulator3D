@@ -14,7 +14,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false
 
       - name: Reject obvious secret/signing files
         shell: bash
@@ -35,12 +37,15 @@ jobs:
           test -f scripts/core/main.gd
           test -f scripts/player/player_controller.gd
           test -f scripts/player/interaction_detector.gd
+          test -f scripts/missions/mission.gd
+          test -f scripts/missions/mission_manager.gd
 
       - name: Validate text files have no CRLF
         shell: bash
         run: |
           set -euo pipefail
-          if git grep -Il '' -- ':!*.png' ':!*.jpg' ':!*.jpeg' ':!*.webp' ':!*.ogg' ':!*.wav' ':!*.mp3' | xargs -r grep -Il $'\r'; then
+          files="$(git ls-files -z | xargs -0 -r file --mime-type | awk -F: '$2 ~ /text\// {sub(/^ /,"",$2); if ($2 ~ /charset=binary/) next; print $1}')"
+          if [ -n "$files" ] && printf '%s\n' "$files" | xargs -r grep -Il $'\r'; then
             echo "CRLF detected in a tracked text file."
             exit 1
           fi
