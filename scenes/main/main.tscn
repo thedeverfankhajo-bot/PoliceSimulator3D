@@ -2,7 +2,7 @@
 
 [ext_resource path="res://scripts/core/main.gd" type="Script" id="1_main"]
 [ext_resource path="res://scenes/ui/status_hud.tscn" type="PackedScene" id="2_hud"]
-[ext_resource path="res://scenes/ui/mobile_controls.tscn" type="PackedScene" id="3_mobile"]
+[ext_resource path="res://scenes/ui/mobile_controls.tscn" type="PackedScene" id="3_mobile"]\n[ext_resource path="res://scenes/ui/main_menu.tscn" type="PackedScene" id="4_menu"]
 
 [sub_resource type="Environment" id="Environment_main"]
 background_mode = 1
@@ -43,6 +43,6 @@ shape = SubResource("BoxShape_ground")
 [node name="PlayerSpawn" type="Marker3D" parent="."]
 position = Vector3(0, 0.9, 8)
 
-[node name="StatusHUD" parent="." instance=ExtResource("2_hud")]
+[node name="StatusHUD" parent="." instance=ExtResource("2_hud")]\n\n[node name="MainMenu" parent="." instance=ExtResource("4_menu")]
 
 [node name="MobileControls" parent="." instance=ExtResource("3_mobile")]
