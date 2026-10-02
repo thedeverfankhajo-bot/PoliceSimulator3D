@@ -275,4 +275,4 @@ func _build_police_station() -> void:
 	for x in [-14.5, -11.5, -8.5]:
 		_add_static_box("GarageDoor", Vector3(2.5, 2.5, 0.12), Vector3(x, 1.3, -34.05), trim, false)
 	_add_sign(Vector3(-12, 6.0, -28), "POLICE")
-	_add_static_box("StationApron", Vector3(10.0, 0.05, 4.0), Vector3(-12, 0.03, -36), road_material if false else _material(Color(0.11, 0.12, 0.13), 0.9), false)
+	_add_static_box("StationApron", Vector3(10.0, 0.05, 4.0), Vector3(-12, 0.03, -36), _material(Color(0.11, 0.12, 0.13), 0.9), false)
