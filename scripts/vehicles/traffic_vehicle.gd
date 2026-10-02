@@ -90,6 +90,7 @@ func _reset_to_loop_start() -> void:
 	global_transform.basis = _loop_reset_rotation
 	_violation_reported = false
 	_violation_evidence.clear()
+	_red_light_reported = false
 	velocity = get_traffic_velocity()
 
 func get_traffic_velocity() -> Vector3:
