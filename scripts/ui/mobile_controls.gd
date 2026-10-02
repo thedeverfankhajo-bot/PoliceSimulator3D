@@ -27,6 +27,8 @@ func _notification(what: int) -> void:
 	if what == NOTIFICATION_RESIZED:
 		_layout_controls()
 		queue_redraw()
+	elif what == NOTIFICATION_WM_WINDOW_FOCUS_OUT:
+		_release_all_inputs()
 
 func _layout_controls() -> void:
 	_action_center = Vector2(size.x - 110.0, size.y - 110.0)
@@ -77,11 +79,17 @@ func _update_joystick(position: Vector2) -> void:
 		offset = offset.normalized() * joystick_radius
 	var value := offset / joystick_radius
 	_joystick_vector = value if value.length() >= joystick_deadzone / joystick_radius else Vector2.ZERO
-	Input.action_press("move_left", maxf(0.0, -_joystick_vector.x))
-	Input.action_press("move_right", maxf(0.0, _joystick_vector.x))
-	Input.action_press("move_forward", maxf(0.0, -_joystick_vector.y))
-	Input.action_press("move_backward", maxf(0.0, _joystick_vector.y))
+	_set_axis_action("move_left", -_joystick_vector.x)
+	_set_axis_action("move_right", _joystick_vector.x)
+	_set_axis_action("move_forward", -_joystick_vector.y)
+	_set_axis_action("move_backward", _joystick_vector.y)
 	queue_redraw()
+
+func _set_axis_action(action: StringName, strength: float) -> void:
+	if strength > 0.0:
+		Input.action_press(action, strength)
+	else:
+		Input.action_release(action)
 
 func _release_movement() -> void:
 	_joystick_id = -1
@@ -95,6 +103,10 @@ func _release_movement() -> void:
 func _release_action() -> void:
 	_action_id = -1
 	Input.action_release("interact")
+
+func _release_all_inputs() -> void:
+	_release_movement()
+	_release_action()
 
 func _draw() -> void:
 	_layout_controls()
