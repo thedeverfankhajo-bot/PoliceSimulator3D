@@ -35,7 +35,7 @@ docs/         Architecture and development documentation
 
 ## Status
 
-Active early gameplay development. The current vertical slice includes first-person movement, police vehicle entry/exit, mobile controls, traffic movement and speeding detection, structured violation evidence, and a traffic-stop mission.
+Active early gameplay development with a procedural starter city, guided first mission, mobile controls, and Android debug export. The current vertical slice includes first-person movement, police vehicle entry/exit, mobile controls, traffic movement and speeding detection, structured violation evidence, and a traffic-stop mission.
 
 ## Security
 
