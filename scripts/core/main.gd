@@ -15,22 +15,22 @@ var player: CharacterBody3D
 
 func _ready() -> void:
 	player = PLAYER_SCENE.instantiate()
-	player.global_position = player_spawn.global_position
 	add_child(player)
+	player.global_position = player_spawn.global_position
 	player.vehicle_exit_blocked.connect(_on_vehicle_exit_blocked)
 
 	var vehicle = VEHICLE_SCENE.instantiate()
-	vehicle.global_position = Vector3(0, 0, -8)
 	add_child(vehicle)
+	vehicle.global_position = Vector3(0, 0, -8)
 	vehicle.entered.connect(player.enter_vehicle)
 
 	var npc = NPC_SCENE.instantiate()
-	npc.global_position = Vector3(3, 0, -8)
 	add_child(npc)
+	npc.global_position = Vector3(3, 0, -8)
 
 	var traffic_vehicle = TRAFFIC_VEHICLE_SCENE.instantiate()
-	traffic_vehicle.global_position = Vector3(0, 0.65, 18)
 	add_child(traffic_vehicle)
+	traffic_vehicle.global_position = Vector3(0, 0.65, 18)
 	traffic_vehicle.violation_detected.connect(_on_traffic_violation)
 
 	mission_manager = preload("res://scripts/missions/mission_manager.gd").new()
