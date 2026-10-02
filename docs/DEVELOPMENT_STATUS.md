@@ -21,6 +21,13 @@ Implemented and verified:
 
 The latest repository-validation run completed successfully after the violation-evidence, Android export, and mission-integration hardening. A debug Android APK is now built automatically in GitHub Actions and uploaded as an artifact.
 
+## Newly completed in this iteration
+
+- procedural starter city composition with road, sidewalks, buildings, crosswalks, signs, and street lights;
+- clearer mission/status/help HUD separation;
+- police emergency siren input and flashing emergency light;
+- Android debug export rebuilt after gameplay changes and verified by CI.
+
 ## Next development targets
 
 The next gameplay expansion should add real world sensors and tests for additional violations such as red-light, stop-sign, and wrong-way behavior. Each new violation must follow the evidence contract and must not bypass mission validation.
