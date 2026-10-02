@@ -20,9 +20,10 @@ func start_mission(mission) -> bool:
 	mission_started.emit(mission)
 	return true
 
-func _on_mission_completed(mission) -> void:
-	if active_mission != mission:
+func _on_mission_completed() -> void:
+	if active_mission == null:
 		return
+	var mission = active_mission
 	mission_completed.emit(mission)
 	active_mission = null
 
