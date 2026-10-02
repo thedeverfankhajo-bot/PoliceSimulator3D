@@ -14,6 +14,12 @@ var siren_enabled := false
 var _siren_phase := 0.0
 @onready var siren_light: OmniLight3D = get_node_or_null("SirenLight") as OmniLight3D
 
+func _ready() -> void:
+	add_to_group("police_vehicle")
+
+func _exit_tree() -> void:
+	remove_from_group("police_vehicle")
+
 func _physics_process(delta: float) -> void:
 	siren_enabled = Input.is_action_pressed("vehicle_siren") if is_occupied else false
 	_siren_phase += delta * 8.0
@@ -31,9 +37,6 @@ func _physics_process(delta: float) -> void:
 	brake = max_brake_force if Input.is_action_pressed("vehicle_brake") else 0.0
 
 func get_control_input() -> Vector2:
-	# Vehicle-specific actions remain the primary desktop/gamepad mapping.
-	# The player movement actions are a deliberate fallback so the same
-	# virtual joystick can drive the patrol vehicle on touch devices.
 	var throttle := Input.get_axis("vehicle_reverse", "vehicle_accelerate")
 	var steer_input := Input.get_axis("vehicle_left", "vehicle_right")
 	if is_zero_approx(throttle):
@@ -52,6 +55,7 @@ func interact() -> void:
 func set_occupied(value: bool) -> void:
 	is_occupied = value
 	if not value:
+		siren_enabled = false
 		engine_force = 0.0
 		steering = 0.0
 		brake = max_brake_force
