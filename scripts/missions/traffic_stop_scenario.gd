@@ -17,10 +17,11 @@ func setup(target_vehicle: Node, target_npc: Node) -> bool:
 	mission.mission_id = "traffic_stop_001"
 	mission.title = mission_title
 	mission.description = mission_description
-	return mission.configure([
+	var objectives: Array[Dictionary] = [
 		{"id": "enter_patrol_vehicle", "title": "سوار خودروی پلیس شو"},
 		{"id": "talk_to_civilian", "title": "با شهروند صحبت کن"}
-	])
+	]
+	return mission.configure(objectives)
 
 func start(mission_manager: Node) -> bool:
 	if mission == null or mission_manager == null:
