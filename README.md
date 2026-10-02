@@ -35,7 +35,7 @@ docs/         Architecture and development documentation
 
 ## Status
 
-Early development. The repository is being established before gameplay systems are added.
+Active early gameplay development. The current vertical slice includes first-person movement, police vehicle entry/exit, mobile controls, traffic movement and speeding detection, structured violation evidence, and a traffic-stop mission.
 
 ## Security
 
