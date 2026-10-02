@@ -55,7 +55,7 @@ func _spawn_gameplay() -> void:
 		push_error("Traffic stop scenario failed to start.")
 		return
 	hud.show_mission(scenario.mission)
-	hud.set_status("مأموریت: خودروی پلیس را پیدا کن و سوار شو.")
+	hud.set_status("مأموریت: خودروی پلیس را پیدا کن و سوار شو. Q: چراغ اضطراری")
 
 func _build_city() -> void:
 	var road_material := _material(Color(0.055, 0.06, 0.07), 0.92)
