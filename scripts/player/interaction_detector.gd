@@ -9,8 +9,12 @@ signal interacted(target: Node)
 signal interaction_missed()
 
 func _physics_process(_delta: float) -> void:
-	if Input.mouse_mode == Input.MOUSE_MODE_CAPTURED and Input.is_action_just_pressed("interact"):
-		try_interact()
+	if Input.is_action_just_pressed("interact"):
+		# Desktop requires a captured mouse for the interaction key, while
+		# touch devices drive the same action through the mobile UI.
+		var mobile_input := OS.has_feature("mobile") or DisplayServer.is_touchscreen_available()
+		if mobile_input or Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
+			try_interact()
 
 func try_interact() -> void:
 	if not is_inside_tree() or camera == null:
