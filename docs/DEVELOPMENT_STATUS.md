@@ -19,7 +19,7 @@ Implemented and verified:
 - main-scene smoke testing;
 - GitHub Actions security and structure gates.
 
-The latest repository-validation run completed successfully after the violation-evidence and mission-integration hardening.
+The latest repository-validation run completed successfully after the violation-evidence, Android export, and mission-integration hardening. A debug Android APK is now built automatically in GitHub Actions and uploaded as an artifact.
 
 ## Next development targets
 
