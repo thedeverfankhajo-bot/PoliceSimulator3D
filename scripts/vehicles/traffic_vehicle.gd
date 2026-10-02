@@ -1,6 +1,8 @@
 extends CharacterBody3D
 class_name TrafficVehicle
 
+const TRAFFIC_VIOLATION_SCRIPT := preload("res://scripts/violations/traffic_violation.gd")
+
 signal violation_detected(vehicle: TrafficVehicle, violation: String)
 signal violation_evidence_detected(vehicle: TrafficVehicle, evidence: Dictionary)
 signal stopped(vehicle: TrafficVehicle)
@@ -88,7 +90,7 @@ func _check_violation() -> void:
 	if _violation_reported or traffic_speed_kmh <= speed_limit_kmh:
 		return
 	_violation_reported = true
-	_violation_evidence = TrafficViolation.create_speeding_evidence(traffic_speed_kmh, speed_limit_kmh)
+	_violation_evidence = TRAFFIC_VIOLATION_SCRIPT.create_speeding_evidence(traffic_speed_kmh, speed_limit_kmh)
 	violation_detected.emit(self, String(_violation_evidence["title"]))
 	violation_evidence_detected.emit(self, _violation_evidence.duplicate(true))
 
