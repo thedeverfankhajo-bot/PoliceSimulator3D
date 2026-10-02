@@ -3,7 +3,6 @@ class_name TrafficVehicle
 
 const TRAFFIC_VIOLATION_SCRIPT := preload("res://scripts/violations/traffic_violation.gd")
 
-
 signal violation_detected(vehicle: TrafficVehicle, violation: String)
 signal violation_evidence_detected(vehicle: TrafficVehicle, evidence: Dictionary)
 signal stopped(vehicle: TrafficVehicle)
@@ -18,23 +17,24 @@ signal stopped(vehicle: TrafficVehicle)
 @export var waypoints: Array[Node3D] = []
 @export var traffic_light: Node
 @export var obey_traffic_light := false
+@export var traffic_ai_enabled := true
+@export_range(0.0, 1.0, 0.05) var ai_min_speed_factor := 0.15
+@export var ai_stop_distance := 7.0
 
 var _waypoint_index := 0
-
 var is_stopped := false
 var _violation_reported := false
 var _violation_evidence: Dictionary = {}
 var _loop_start_position := Vector3.ZERO
 var _loop_reset_rotation := Basis.IDENTITY
 var _spawn_initialized := false
-var _last_z := 0.0
 var _red_light_reported := false
-
+var _ai_speed_factor := 1.0
+var _ai_stop_requested := false
 
 func _ready() -> void:
 	_loop_start_position = global_position
 	_loop_reset_rotation = global_transform.basis
-	_last_z = global_position.z
 
 func _physics_process(delta: float) -> void:
 	var previous_z := global_position.z
@@ -42,11 +42,11 @@ func _physics_process(delta: float) -> void:
 		_loop_start_position = global_position
 		_loop_reset_rotation = global_transform.basis
 		_spawn_initialized = true
-	if is_stopped:
+	if is_stopped or _ai_stop_requested:
 		velocity = Vector3.ZERO
 		return
 	if waypoints.is_empty():
-		velocity = get_traffic_velocity()
+		velocity = get_traffic_velocity() * _ai_speed_factor
 		move_and_slide()
 		_check_violation()
 		_check_red_light_violation(previous_z)
@@ -73,12 +73,11 @@ func _follow_waypoints(delta: float) -> void:
 		_waypoint_index = (_waypoint_index + 1) % waypoints.size()
 		target = waypoints[_waypoint_index]
 		offset = target.global_position - global_position
-		offset.y = 0.0
 	if offset.length_squared() <= 0.001:
 		velocity = Vector3.ZERO
 		return
 	var direction := offset.normalized()
-	velocity = direction * (traffic_speed_kmh / 3.6)
+	velocity = direction * (traffic_speed_kmh / 3.6) * _ai_speed_factor
 	var target_yaw := atan2(-direction.x, -direction.z)
 	rotation.y = lerp_angle(rotation.y, target_yaw, clamp(turn_speed * delta, 0.0, 1.0))
 	move_and_slide()
@@ -91,10 +90,21 @@ func _reset_to_loop_start() -> void:
 	_violation_reported = false
 	_violation_evidence.clear()
 	_red_light_reported = false
+	_ai_speed_factor = 1.0
+	_ai_stop_requested = false
 	velocity = get_traffic_velocity()
 
 func get_traffic_velocity() -> Vector3:
 	return -transform.basis.z * (traffic_speed_kmh / 3.6)
+
+func set_ai_speed_factor(factor: float) -> void:
+	_ai_speed_factor = clamp(factor, ai_min_speed_factor, 1.0)
+
+func set_ai_stop_requested(should_stop: bool) -> void:
+	_ai_stop_requested = should_stop
+
+func get_ai_speed_factor() -> float:
+	return _ai_speed_factor
 
 func _check_violation() -> void:
 	if _violation_reported or traffic_speed_kmh <= speed_limit_kmh:
@@ -138,6 +148,7 @@ func stop_for_police() -> void:
 	if is_stopped:
 		return
 	is_stopped = true
+	_ai_stop_requested = true
 	velocity = Vector3.ZERO
 	stopped.emit(self)
 

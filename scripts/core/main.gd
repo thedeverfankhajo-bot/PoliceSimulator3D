@@ -9,18 +9,23 @@ const NPC_SCENE := preload("res://scenes/npcs/civilian_npc.tscn")
 const TRAFFIC_VEHICLE_SCENE := preload("res://scenes/vehicles/traffic_vehicle.tscn")
 const SCENARIO_SCRIPT := preload("res://scripts/missions/traffic_stop_scenario.gd")
 const TRAFFIC_LIGHT_SCRIPT := preload("res://scripts/traffic/traffic_light.gd")
+const TRAFFIC_AI_SCRIPT := preload("res://scripts/traffic/traffic_ai_controller.gd")
 
 @onready var player_spawn: Marker3D = $PlayerSpawn
 @onready var hud: CanvasLayer = $StatusHUD
 
 var mission_manager: Node
 var player: CharacterBody3D
+var traffic_ai: Node
 
 func _ready() -> void:
 	_build_city()
 	_spawn_gameplay()
 
 func _spawn_gameplay() -> void:
+	traffic_ai = TRAFFIC_AI_SCRIPT.new()
+	traffic_ai.name = "TrafficAIController"
+	add_child(traffic_ai)
 	player = PLAYER_SCENE.instantiate()
 	add_child(player)
 	player.global_position = player_spawn.global_position
@@ -50,6 +55,17 @@ func _spawn_gameplay() -> void:
 	traffic_vehicle.traffic_light = traffic_light
 	traffic_vehicle.global_position = Vector3(0, 0.65, 18)
 	traffic_vehicle.violation_detected.connect(_on_traffic_violation)
+	traffic_ai.register_vehicle(traffic_vehicle)
+	for i in range(2):
+		var extra_traffic = TRAFFIC_VEHICLE_SCENE.instantiate()
+		add_child(extra_traffic)
+		extra_traffic.vehicle_id = "civilian_sedan_%03d" % (i + 2)
+		extra_traffic.global_position = Vector3(-2.8 if i == 0 else 2.8, 0.65, 30.0 + (i * 10.0))
+		extra_traffic.traffic_light = traffic_light
+		extra_traffic.obey_traffic_light = true
+		extra_traffic.traffic_speed_kmh = 42.0 + (i * 5.0)
+		extra_traffic.violation_detected.connect(_on_traffic_violation)
+		traffic_ai.register_vehicle(extra_traffic)
 
 	mission_manager = preload("res://scripts/missions/mission_manager.gd").new()
 	add_child(mission_manager)
