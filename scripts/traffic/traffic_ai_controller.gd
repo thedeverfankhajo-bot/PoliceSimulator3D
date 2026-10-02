@@ -5,6 +5,9 @@ class_name TrafficAIController
 @export_range(0.5, 8.0, 0.5) var full_stop_distance := 2.5
 @export_range(0.1, 4.0, 0.1) var lane_width := 2.5
 @export_range(0.1, 1.0, 0.05) var minimum_speed_factor := 0.2
+@export_range(5.0, 40.0, 1.0) var police_yield_distance := 18.0
+@export_range(1.0, 10.0, 0.5) var police_stop_distance := 5.0
+@export_range(0.1, 1.0, 0.05) var police_yield_speed_factor := 0.35
 
 var _vehicles: Array[Node3D] = []
 
@@ -31,6 +34,12 @@ func _physics_process(_delta: float) -> void:
 				stop_requested = true
 			elif gap < safe_follow_distance:
 				desired_factor = clamp(gap / safe_follow_distance, minimum_speed_factor, 1.0)
+		if _should_yield_to_police(vehicle):
+			var police_distance := _nearest_police_distance(vehicle)
+			if police_distance <= police_stop_distance:
+				stop_requested = true
+			else:
+				desired_factor = min(desired_factor, police_yield_speed_factor)
 		vehicle.set_ai_speed_factor(desired_factor)
 		if vehicle.has_method("set_ai_stop_requested"):
 			vehicle.set_ai_stop_requested(stop_requested)
@@ -48,6 +57,25 @@ func _find_leader(vehicle: Node3D) -> Node3D:
 			best_gap = gap
 			best = candidate
 	return best
+
+func _should_yield_to_police(vehicle: Node3D) -> bool:
+	return _nearest_police_distance(vehicle) <= police_yield_distance
+
+func _nearest_police_distance(vehicle: Node3D) -> float:
+	var nearest := INF
+	for police in get_tree().get_nodes_in_group("police_vehicle"):
+		if not is_instance_valid(police) or police == vehicle:
+			continue
+		if not bool(police.get("siren_enabled")):
+			continue
+		if abs(police.global_position.x - vehicle.global_position.x) > lane_width:
+			continue
+		# Traffic drives toward decreasing Z. A police vehicle behind the
+		# civilian (larger Z) with its siren on has priority to pass.
+		if police.global_position.z <= vehicle.global_position.z:
+			continue
+		nearest = min(nearest, police.global_position.distance_to(vehicle.global_position))
+	return nearest
 
 func _cleanup() -> void:
 	for i in range(_vehicles.size() - 1, -1, -1):
