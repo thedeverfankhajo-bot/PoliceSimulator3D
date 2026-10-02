@@ -65,8 +65,7 @@ jobs:
           ARCHIVE="Godot_v${GODOT_VERSION}-stable_export_templates.tpz"
           URL="https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}-stable/${ARCHIVE}"
           curl --fail --location --retry 3 --output "$ARCHIVE" "$URL"
-          mkdir -p "$HOME/.local/share/gododot/export_templates/${GODOT_VERSION}.stable"
-          mkdir -p "$HOME/.local/share/godot/export_templates/${GODOT_VERSION}.stable"
+                    mkdir -p "$HOME/.local/share/godot/export_templates/${GODOT_VERSION}.stable"
           unzip -q "$ARCHIVE" -d .godot-templates
           cp -a .godot-templates/templates/. "$HOME/.local/share/godot/export_templates/${GODOT_VERSION}.stable/"
 
