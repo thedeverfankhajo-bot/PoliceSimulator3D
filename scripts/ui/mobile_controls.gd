@@ -56,9 +56,6 @@ func _handle_touch(event: InputEventScreenTouch) -> void:
 		elif event.index == _brake_id:
 			_release_brake()
 			get_viewport().set_input_as_handled()
-		elif event.index == _brake_id:
-			_release_brake()
-			get_viewport().set_input_as_handled()
 		return
 
 	if event.pressed:
@@ -81,6 +78,9 @@ func _handle_touch(event: InputEventScreenTouch) -> void:
 			get_viewport().set_input_as_handled()
 		elif event.index == _action_id:
 			_release_action()
+			get_viewport().set_input_as_handled()
+		elif event.index == _brake_id:
+			_release_brake()
 			get_viewport().set_input_as_handled()
 
 func _is_joystick_area(position: Vector2) -> bool:
