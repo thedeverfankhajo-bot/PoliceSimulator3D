@@ -17,14 +17,10 @@ func setup(target_vehicle: PoliceVehicle, target_npc: CivilianNPC) -> bool:
 	mission.mission_id = "traffic_stop_001"
 	mission.title = mission_title
 	mission.description = mission_description
-	if not mission.configure([
+	return mission.configure([
 		{"id": "inspect_vehicle", "title": "با خودرو تعامل کن"},
 		{"id": "talk_to_civilian", "title": "با شهروند صحبت کن"}
-	]):
-		mission.free()
-		mission = null
-		return false
-	return true
+	])
 
 func start(mission_manager: MissionManager) -> bool:
 	if mission == null or mission_manager == null:
