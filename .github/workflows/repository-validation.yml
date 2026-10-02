@@ -115,8 +115,16 @@ jobs:
           unzip -q "$GODOT_ARCHIVE" -d .godot-ci
           GODOT_BIN=".godot-ci/Godot_v${GODOT_VERSION}-stable_linux.x86_64"
           chmod +x "$GODOT_BIN"
-          timeout 60s "$GODOT_BIN" --headless --path . --script res://tests/test_mission.gd --quit-after 120
-          timeout 60s "$GODOT_BIN" --headless --path . --script res://tests/test_traffic_vehicle.gd --quit-after 120
+          timeout 60s "$GODOT_BIN" --headless --path . --script res://tests/test_mission.gd
+          timeout 60s "$GODOT_BIN" --headless --path . --script res://tests/test_traffic_vehicle.gd
+
+      - name: Parse all GDScript files
+        shell: bash
+        run: |
+          set -euo pipefail
+          while IFS= read -r -d '' script; do
+            timeout 30s "$GODOT_BIN" --headless --path . --check-only --script "$script"
+          done < <(find scripts tests -type f -name '*.gd' -print0)
 
       - name: Smoke test main scene
         shell: bash
