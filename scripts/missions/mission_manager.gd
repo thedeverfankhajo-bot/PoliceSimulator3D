@@ -6,11 +6,15 @@ signal mission_completed(mission)
 signal mission_failed(mission, reason: String)
 
 var active_mission
+var _starting_mission := false
 
 func start_mission(mission) -> bool:
-	if mission == null or is_instance_valid(active_mission):
+	if _starting_mission or mission == null or is_instance_valid(active_mission):
 		return false
-	if not mission.start():
+	_starting_mission = true
+	var started := mission.start()
+	_starting_mission = false
+	if not started:
 		return false
 	active_mission = mission
 	if not mission.completed.is_connected(_on_mission_completed):
