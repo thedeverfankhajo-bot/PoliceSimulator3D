@@ -2,6 +2,7 @@ extends CharacterBody3D
 class_name TrafficVehicle
 
 signal violation_detected(vehicle: TrafficVehicle, violation: String)
+signal violation_evidence_detected(vehicle: TrafficVehicle, evidence: Dictionary)
 signal stopped(vehicle: TrafficVehicle)
 
 @export var vehicle_id := "civilian_sedan_001"
@@ -17,6 +18,7 @@ var _waypoint_index := 0
 
 var is_stopped := false
 var _violation_reported := false
+var _violation_evidence: Dictionary = {}
 var _loop_start_position := Vector3.ZERO
 var _loop_reset_rotation := Basis.IDENTITY
 var _spawn_initialized := false
@@ -76,6 +78,7 @@ func _reset_to_loop_start() -> void:
 	global_position = reset_position
 	global_transform.basis = _loop_reset_rotation
 	_violation_reported = false
+	_violation_evidence.clear()
 	velocity = get_traffic_velocity()
 
 func get_traffic_velocity() -> Vector3:
@@ -85,10 +88,15 @@ func _check_violation() -> void:
 	if _violation_reported or traffic_speed_kmh <= speed_limit_kmh:
 		return
 	_violation_reported = true
-	violation_detected.emit(self, "سرعت غیرمجاز")
+	_violation_evidence = TrafficViolation.create_speeding_evidence(traffic_speed_kmh, speed_limit_kmh)
+	violation_detected.emit(self, String(_violation_evidence["title"]))
+	violation_evidence_detected.emit(self, _violation_evidence.duplicate(true))
 
 func has_reported_violation() -> bool:
 	return _violation_reported
+
+func get_violation_evidence() -> Dictionary:
+	return _violation_evidence.duplicate(true)
 
 func stop_for_police() -> void:
 	if is_stopped:
