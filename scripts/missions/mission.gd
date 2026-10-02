@@ -13,14 +13,22 @@ var status: MissionState.Status = MissionState.Status.AVAILABLE
 var _objectives: Array[Dictionary] = []
 var _completed: Array[bool] = []
 
-func configure(objectives: Array[Dictionary]) -> void:
-	if status == MissionState.Status.ACTIVE:
-		return
+func configure(objectives: Array[Dictionary]) -> bool:
+	if status == MissionState.Status.ACTIVE or status == MissionState.Status.COMPLETED:
+		return false
+	if objectives.is_empty():
+		return false
+	for objective in objectives:
+		if not objective.has("id") or not objective.has("title"):
+			return false
+		if String(objective["id"]).is_empty() or String(objective["title"]).is_empty():
+			return false
 	_objectives = objectives.duplicate(true)
 	_completed.clear()
 	_completed.resize(_objectives.size())
 	for i in _completed.size():
 		_completed[i] = false
+	return true
 
 func start() -> bool:
 	if status != MissionState.Status.AVAILABLE or _objectives.is_empty():
