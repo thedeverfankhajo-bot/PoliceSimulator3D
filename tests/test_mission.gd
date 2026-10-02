@@ -42,5 +42,26 @@ func _initialize() -> void:
 	if mission.status != MISSION_STATE.Status.COMPLETED:
 		_fail("Mission should complete after all objectives.")
 		return
+
+	var failed_mission = MISSION_SCRIPT.new()
+	if not failed_mission.configure([{"id": "fail", "title": "Failure objective"}]):
+		_fail("Failure test mission must configure.")
+		return
+	if not failed_mission.start():
+		_fail("Failure test mission must start.")
+		return
+	if not failed_mission.fail("Traffic suspect escaped"):
+		_fail("Active mission must be able to fail.")
+		return
+	if failed_mission.status != MISSION_STATE.Status.FAILED:
+		_fail("Failed mission must enter FAILED state.")
+		return
+	if failed_mission.failure_reason != "Traffic suspect escaped":
+		_fail("Failure reason must be preserved.")
+		return
+	if failed_mission.fail("second failure"):
+		_fail("Failed mission must not fail twice.")
+		return
+
 	print("Mission tests passed.")
 	quit(0)
