@@ -6,12 +6,14 @@ const MISSION_STATE := preload("res://scripts/missions/mission_state.gd")
 signal status_changed(status: int)
 signal objective_completed(index: int)
 signal completed
+signal failed(reason: String)
 
 @export var mission_id := ""
 @export var title := ""
 @export_multiline var description := ""
 
 var status: int = MISSION_STATE.Status.AVAILABLE
+var failure_reason := ""
 var _objectives: Array[Dictionary] = []
 var _completed: Array[bool] = []
 
@@ -34,6 +36,7 @@ func configure(objectives: Array[Dictionary]) -> bool:
 	_completed.resize(_objectives.size())
 	for i in _completed.size():
 		_completed[i] = false
+	failure_reason = ""
 	return true
 
 func get_objectives() -> Array[Dictionary]:
@@ -62,4 +65,13 @@ func complete_objective(index: int) -> bool:
 		status = MISSION_STATE.Status.COMPLETED
 		status_changed.emit(status)
 		completed.emit()
+	return true
+
+func fail(reason: String) -> bool:
+	if status != MISSION_STATE.Status.ACTIVE:
+		return false
+	failure_reason = reason.strip_edges()
+	status = MISSION_STATE.Status.FAILED
+	status_changed.emit(status)
+	failed.emit(failure_reason)
 	return true
