@@ -139,6 +139,20 @@ func _build_city() -> void:
 	_add_sign(Vector3(4.8, 1.2, -2.8), "POLICE STOP")
 	_add_sign(Vector3(-4.8, 1.2, 10.0), "50")
 	_build_police_station()
+	_build_police_station()
+
+
+func _build_police_station() -> void:
+	var wall := _material(Color(0.16, 0.19, 0.23), 0.78)
+	var roof := _material(Color(0.08, 0.10, 0.13), 0.9)
+	var glass := _material(Color(0.12, 0.25, 0.32), 0.28)
+	_add_static_box("PoliceStationBody", Vector3(16, 5.0, 12), Vector3(-15, 2.5, -5), wall)
+	_add_static_box("PoliceStationRoof", Vector3(17, 0.5, 13), Vector3(-15, 5.25, -5), roof)
+	_add_static_box("PoliceStationEntrance", Vector3(6, 2.8, 0.18), Vector3(-15, 2.5, 1.0), glass, false)
+	_add_static_box("PoliceStationGarage", Vector3(7, 3.0, 0.2), Vector3(-15, 2.2, -11.0), roof, false)
+	for x in [-20.0, -15.0, -10.0]:
+		_add_static_box("StationWindow", Vector3(3.2, 1.8, 0.12), Vector3(x, 3.0, 1.05), glass, false)
+	_add_sign(Vector3(-15, 6.2, 1.0), "POLICE")
 
 func _add_crosswalk(z: float, material: Material) -> void:
 	for x in [-3.2, -1.9, -0.6, 0.7, 2.0, 3.3]:
