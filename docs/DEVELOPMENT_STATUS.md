@@ -1,28 +1,41 @@
 # Development Status
 
-## Rule
+## Verification rule
 
-No feature is considered complete until it has been implemented, reviewed against the relevant official documentation, and verified by an appropriate test or reproducible check.
+No feature is complete until it has been implemented, reviewed against the relevant official documentation, and verified by an appropriate automated test, CI check, or reproducible local check.
 
-## Current foundation
+## Repository baseline
 
-- Repository initialized.
-- Secret/build artifacts excluded by `.gitignore`.
-- Text/binary handling defined in `.gitattributes`.
-- Godot project bootstrap created.
-- Main scene entry point configured.
-- Minimal runtime bootstrap validation added.
+- Default branch is `main`.
+- Legacy bootstrap branches were identified during repository audit; no new feature branches should be created for routine work.
+- CI validates the default branch with least-privilege permissions and a pinned GitHub Action.
+- Godot 4.7.2 Linux x86_64 is pinned in CI by SHA-256:
+  `cadd3204e728a35d3f13adb7fd0d7902636b79f6b95c40c265eb73b6c35329e4`.
+- Secrets, signing credentials, and generated build artifacts are excluded from version control.
 
-## Verification still required
+## Current gameplay foundation
 
-- Verify the exact Godot editor version used locally.
-- Open and run the project with that version.
-- Verify the main scene and bootstrap output.
-- Establish CI validation.
-- Establish repository security controls.
-- Establish an Android export toolchain and verify it on a supported environment.
-- Measure a baseline before performance optimization.
+- Godot main scene and bootstrap.
+- First-person police player controller.
+- Safe raycast interaction detector.
+- Enter/exit police vehicle flow with exit-space validation.
+- Police vehicle four-wheel composition and interaction contract.
+- Civilian NPC interaction contract.
+- Mission and mission-manager state flow.
+- Traffic vehicle movement, violation detection, and police stop state.
+- Traffic-stop vertical slice: enter patrol vehicle → stop traffic vehicle → interact with civilian → mission completion.
+- Headless mission and traffic-vehicle tests.
+- GDScript parser validation and main-scene smoke validation in CI.
 
-## Development rule
+## Known verification gaps
 
-Implementation, bug fixing, missing pieces, testing, documentation, and performance/security review are performed continuously rather than as separate end phases.
+- Exact Godot editor version used on the developer device still needs local verification.
+- Android export toolchain and signed release build still need verification on a supported environment.
+- Touch/mobile controls need implementation and device testing.
+- Real-device performance baseline still needs measurement before optimization claims.
+- Repository branch-protection/ruleset enforcement must be verified in GitHub settings before being described as enabled.
+- Advanced vehicle physics remain subject to Godot's documented VehicleBody3D/VehicleWheel3D limitations; realistic vehicle dynamics require additional validation or a custom physics approach.
+
+## Continuous work
+
+Bug fixing, missing-piece analysis, gameplay development, testing, security review, performance measurement, documentation, and release hardening are continuous activities rather than separate end phases.
