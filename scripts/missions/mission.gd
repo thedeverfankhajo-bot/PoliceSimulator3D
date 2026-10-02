@@ -1,7 +1,9 @@
 extends RefCounted
 class_name Mission
 
-signal status_changed(status: MissionState.Status)
+const MISSION_STATE := preload("res://scripts/missions/mission_state.gd")
+
+signal status_changed(status: int)
 signal objective_completed(index: int)
 signal completed
 
@@ -9,12 +11,12 @@ signal completed
 @export var title := ""
 @export_multiline var description := ""
 
-var status: MissionState.Status = MissionState.Status.AVAILABLE
+var status: int = MISSION_STATE.Status.AVAILABLE
 var _objectives: Array[Dictionary] = []
 var _completed: Array[bool] = []
 
 func configure(objectives: Array[Dictionary]) -> bool:
-	if status == MissionState.Status.ACTIVE or status == MissionState.Status.COMPLETED:
+	if status == MISSION_STATE.Status.ACTIVE or status == MISSION_STATE.Status.COMPLETED:
 		return false
 	if objectives.is_empty():
 		return false
@@ -43,21 +45,21 @@ func is_objective_completed(index: int) -> bool:
 	return _completed[index]
 
 func start() -> bool:
-	if status != MissionState.Status.AVAILABLE or _objectives.is_empty():
+	if status != MISSION_STATE.Status.AVAILABLE or _objectives.is_empty():
 		return false
-	status = MissionState.Status.ACTIVE
+	status = MISSION_STATE.Status.ACTIVE
 	status_changed.emit(status)
 	return true
 
 func complete_objective(index: int) -> bool:
-	if status != MissionState.Status.ACTIVE:
+	if status != MISSION_STATE.Status.ACTIVE:
 		return false
 	if index < 0 or index >= _completed.size() or _completed[index]:
 		return false
 	_completed[index] = true
 	objective_completed.emit(index)
 	if _completed.all(func(done: bool) -> bool: return done):
-		status = MissionState.Status.COMPLETED
+		status = MISSION_STATE.Status.COMPLETED
 		status_changed.emit(status)
 		completed.emit()
 	return true
