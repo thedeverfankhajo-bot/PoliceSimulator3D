@@ -1,6 +1,7 @@
-[gd_scene load_steps=8 format=3]
+[gd_scene load_steps=10 format=3]
 
 [ext_resource path="res://scripts/core/main.gd" type="Script" id="1_main"]
+[ext_resource path="res://scenes/ui/status_hud.tscn" type="PackedScene" id="2_hud"]
 
 [sub_resource type="Environment" id="Environment_main"]
 background_mode = 1
@@ -40,3 +41,5 @@ shape = SubResource("BoxShape_ground")
 
 [node name="PlayerSpawn" type="Marker3D" parent="."]
 position = Vector3(0, 0.9, 8)
+
+[node name="StatusHUD" parent="." instance=ExtResource("2_hud")]
