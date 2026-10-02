@@ -12,7 +12,11 @@ signal stopped(vehicle: TrafficVehicle)
 
 var is_stopped := false
 var _violation_reported := false
+var _loop_start_position := Vector3.ZERO
 
+
+func _ready() -> void:
+	_loop_start_position = global_position
 
 func _physics_process(_delta: float) -> void:
 	if is_stopped:
@@ -22,7 +26,13 @@ func _physics_process(_delta: float) -> void:
 	move_and_slide()
 	_check_violation()
 	if global_position.z <= loop_end_z:
-		global_position.z = loop_start_z
+		_reset_to_loop_start()
+
+func _reset_to_loop_start() -> void:
+	var reset_position := _loop_start_position
+	reset_position.z = loop_start_z
+	global_position = reset_position
+	velocity = get_traffic_velocity()
 
 func get_traffic_velocity() -> Vector3:
 	return -transform.basis.z * (traffic_speed_kmh / 3.6)
