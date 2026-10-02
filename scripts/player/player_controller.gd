@@ -1,8 +1,8 @@
 extends CharacterBody3D
 class_name PlayerController
 
-signal vehicle_entered(vehicle: PoliceVehicle)
-signal vehicle_exited(vehicle: PoliceVehicle)
+signal vehicle_entered(vehicle: Node)
+signal vehicle_exited(vehicle: Node)
 signal vehicle_exit_blocked()
 
 @export var move_speed: float = 5.0
@@ -12,12 +12,12 @@ signal vehicle_exit_blocked()
 
 @onready var camera_pivot: Node3D = $CameraPivot
 @onready var camera: Camera3D = $CameraPivot/Camera3D
-@onready var interaction_detector: InteractionDetector = $CameraPivot/InteractionDetector
+@onready var interaction_detector: Node3D = $CameraPivot/InteractionDetector
 @onready var collision_shape: CollisionShape3D = $CollisionShape3D
 @onready var visual: Node3D = $Visual
 
 var _pitch := 0.0
-var _active_vehicle: PoliceVehicle
+var _active_vehicle: Node
 var _saved_collision_layer := 1
 var _saved_collision_mask := 1
 var _saved_camera_pivot_position := Vector3.ZERO
@@ -60,7 +60,7 @@ func _physics_process(delta: float) -> void:
 
 	move_and_slide()
 
-func enter_vehicle(vehicle: PoliceVehicle) -> void:
+func enter_vehicle(vehicle: Node) -> void:
 	if vehicle == null or _active_vehicle != null or not is_instance_valid(vehicle):
 		return
 	if vehicle.is_occupied:
@@ -114,7 +114,7 @@ func exit_vehicle() -> void:
 	camera.make_current()
 	vehicle_exited.emit(vehicle)
 
-func _is_exit_position_clear(exit_position: Vector3, vehicle: PoliceVehicle) -> bool:
+func _is_exit_position_clear(exit_position: Vector3, vehicle: Node) -> bool:
 	if collision_shape.shape == null:
 		return false
 
