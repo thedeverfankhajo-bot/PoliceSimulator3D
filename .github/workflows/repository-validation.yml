@@ -19,7 +19,7 @@ jobs:
     timeout-minutes: 10
     steps:
       - name: Checkout repository
-        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
 
@@ -44,9 +44,12 @@ jobs:
           test -f scripts/player/interaction_detector.gd
           test -f scripts/missions/mission.gd
           test -f scripts/missions/mission_manager.gd
+          test -f scripts/missions/traffic_stop_scenario.gd
+          test -f scripts/traffic/traffic_ai_controller.gd
           test -f scripts/violations/traffic_violation.gd
           test -f tests/test_traffic_violation.gd
           test -f tests/test_traffic_light.gd
+          test -f tests/test_traffic_ai.gd
           test -f export_presets.cfg
           test -f .github/workflows/android-apk.yml
           test -f assets/icons/police_simulator.svg
@@ -69,10 +72,12 @@ jobs:
           set -euo pipefail
           test -f scenes/player/player.tscn
           test -f scenes/vehicles/police_vehicle.tscn
+          test -f scenes/vehicles/traffic_vehicle.tscn
           test -f scenes/npcs/civilian_npc.tscn
           test -f scenes/ui/status_hud.tscn
           grep -q 'class_name Mission' scripts/missions/mission.gd
           grep -q 'class_name MissionManager' scripts/missions/mission_manager.gd
+          grep -q 'class_name TrafficAIController' scripts/traffic/traffic_ai_controller.gd
 
       - name: Validate police vehicle and interaction contract
         shell: bash
@@ -85,11 +90,11 @@ jobs:
           grep -q 'name="ExitPoint"' scenes/vehicles/police_vehicle.tscn
           grep -q 'is_occupied' scripts/vehicles/police_vehicle.gd
           grep -q 'max_entry_speed_kmh' scripts/vehicles/police_vehicle.gd
+          grep -q 'add_to_group("police_vehicle")' scripts/vehicles/police_vehicle.gd
           grep -q 'enter_vehicle' scripts/player/player_controller.gd
           grep -q 'exit_vehicle' scripts/player/player_controller.gd
           grep -q 'PhysicsShapeQueryParameters3D' scripts/player/player_controller.gd
           grep -q 'func _find_interactable(start: Node)' scripts/player/interaction_detector.gd
-          grep -q 'query.exclude = \[get_parent().get_parent().get_rid()\]' scripts/player/interaction_detector.gd
           grep -q 'vehicle.entered.connect(player.enter_vehicle)' scripts/core/main.gd
           grep -q 'active_mission = mission' scripts/missions/mission_manager.gd
           grep -q 'if active_mission == mission:' scripts/missions/mission_manager.gd
@@ -101,11 +106,13 @@ jobs:
           grep -q 'func _release_brake' scripts/ui/mobile_controls.gd
           grep -q 'Input.action_press("vehicle_brake")' scripts/ui/mobile_controls.gd
           grep -q 'var touch_device := OS.has_feature("mobile") or DisplayServer.is_touchscreen_available()' scripts/player/interaction_detector.gd
-          grep -q 'OS.has_feature("mobile") or DisplayServer.is_touchscreen_available()' scripts/player/interaction_detector.gd
           grep -q 'func _set_axis_action' scripts/ui/mobile_controls.gd
           grep -q 'func get_control_input' scripts/vehicles/police_vehicle.gd
           grep -q 'class_name TrafficVehicle' scripts/vehicles/traffic_vehicle.gd
-          test -f scenes/vehicles/traffic_vehicle.tscn
+          grep -q 'class_name TrafficAIController' scripts/traffic/traffic_ai_controller.gd
+          grep -q 'set_ai_speed_factor' scripts/traffic/traffic_ai_controller.gd
+          grep -q 'police_yield_distance' scripts/traffic/traffic_ai_controller.gd
+          grep -q 'siren_enabled' scripts/vehicles/police_vehicle.gd
           grep -q 'if not vehicle.entered.is_connected(_on_vehicle_entered)' scripts/missions/traffic_stop_scenario.gd
           grep -q 'not mission.is_objective_completed(0)' scripts/missions/traffic_stop_scenario.gd
           grep -q '_mission = mission' scripts/ui/status_hud.gd
@@ -114,18 +121,18 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          grep -Eq 'uses: actions/checkout@[0-9a-f]{40}' .github/workflows/repository-validation.yml
+          grep -Fq 'uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1' .github/workflows/repository-validation.yml
+          grep -Fq 'uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1' .github/workflows/android-apk.yml
           grep -q 'persist-credentials: false' .github/workflows/repository-validation.yml
           grep -q '^permissions:' .github/workflows/repository-validation.yml
           grep -q 'contents: read' .github/workflows/repository-validation.yml
-          grep -Fq 'uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262' .github/workflows/android-apk.yml
           grep -Fq 'uses: actions/setup-java@c5195efecf7bdfc987ee8bae7a71cb8b11521c00' .github/workflows/android-apk.yml
           grep -Fq 'uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02' .github/workflows/android-apk.yml
           grep -q 'name="Android Debug"' export_presets.cfg
           grep -q 'platform="Android"' export_presets.cfg
           grep -q 'package/unique_name="com.policesimulator3d.game"' export_presets.cfg
 
-      - name: Run Godot mission tests
+      - name: Run Godot mission and traffic tests
         shell: bash
         run: |
           set -euo pipefail
