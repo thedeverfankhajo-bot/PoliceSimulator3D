@@ -81,6 +81,9 @@ jobs:
           grep -q 'exit_vehicle' scripts/player/player_controller.gd
           grep -q 'PhysicsShapeQueryParameters3D' scripts/player/player_controller.gd
           grep -q 'vehicle.entered.connect(player.enter_vehicle)' scripts/core/main.gd
+          grep -q 'npc.interacted.connect(_on_npc_interacted)' scripts/missions/traffic_stop_scenario.gd
+          grep -q 'not mission.is_objective_completed(0)' scripts/missions/traffic_stop_scenario.gd
+          grep -q '_mission = mission' scripts/ui/status_hud.gd
 
       - name: Validate action pinning and least privilege
         shell: bash
