@@ -92,6 +92,10 @@ func _check_violation() -> void:
 		return
 	_violation_reported = true
 	_violation_evidence = TRAFFIC_VIOLATION_SCRIPT.create_speeding_evidence(traffic_speed_kmh, speed_limit_kmh)
+	if not TRAFFIC_VIOLATION_SCRIPT.is_valid_evidence(_violation_evidence):
+		_violation_evidence.clear()
+		_violation_reported = false
+		return
 	violation_detected.emit(self, String(_violation_evidence["title"]))
 	violation_evidence_detected.emit(self, _violation_evidence.duplicate(true))
 
