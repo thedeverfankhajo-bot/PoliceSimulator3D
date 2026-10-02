@@ -1,7 +1,7 @@
 extends Node3D
 class_name InteractionDetector
 
-@export var interaction_distance: float = 3.0
+@export_range(0.5, 10.0, 0.1) var interaction_distance: float = 3.0
 @export_flags_3d_physics var collision_mask: int = 1
 @onready var camera: Camera3D = get_parent().get_node_or_null("Camera3D") as Camera3D
 
@@ -13,7 +13,7 @@ func _physics_process(_delta: float) -> void:
 		try_interact()
 
 func try_interact() -> void:
-	if camera == null or not is_inside_tree():
+	if not is_inside_tree() or camera == null:
 		interaction_missed.emit()
 		return
 
