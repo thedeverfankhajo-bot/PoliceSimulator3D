@@ -53,7 +53,7 @@ jobs:
           URL="https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}-stable/${ARCHIVE}"
           SHA256="cadd3204e728a35d3f13adb7fd0d7902636b79f6b95c40c265eb73b6c35329e4"
           curl --fail --location --retry 3 --output "$ARCHIVE" "$URL"
-          printf '%s  %s\\n' "$SHA256" "$ARCHIVE" | sha256sum --check --status
+          printf '%s  %s\n' "$SHA256" "$ARCHIVE" | sha256sum --check --status
           unzip -q "$ARCHIVE" -d .godot-ci
           chmod +x ".godot-ci/Godot_v${GODOT_VERSION}-stable_linux.x86_64"
 
