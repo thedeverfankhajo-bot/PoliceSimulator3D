@@ -27,9 +27,11 @@ func try_interact() -> void:
 		interaction_missed.emit()
 		return
 
-	var target := result.get("collider") as Node
-	if target != null and target.has_method("interact"):
-		target.interact()
-		interacted.emit(target)
-	else:
-		interaction_missed.emit()
+	var collider: Variant = result.get("collider")
+	if collider is Node:
+		var target: Node = collider
+		if target.has_method("interact"):
+			target.interact()
+			interacted.emit(target)
+			return
+	interaction_missed.emit()
