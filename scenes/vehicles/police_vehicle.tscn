@@ -1,9 +1,16 @@
-[gd_scene load_steps=3 format=3]
+[gd_scene load_steps=5 format=3]
 
 [ext_resource type="Script" path="res://scripts/vehicles/police_vehicle.gd" id="1_vehicle"]
 
 [sub_resource type="BoxShape3D" id="BoxShape_vehicle"]
 size = Vector3(2.0, 1.2, 4.2)
+
+[sub_resource type="BoxMesh" id="BoxMesh_vehicle"]
+size = Vector3(2.0, 1.2, 4.2)
+
+[sub_resource type="StandardMaterial3D" id="Material_vehicle"]
+albedo_color = Color(0.06, 0.08, 0.12, 1)
+roughness = 0.75
 
 [node name="PoliceVehicle" type="StaticBody3D"]
 script = ExtResource("1_vehicle")
@@ -11,3 +18,8 @@ script = ExtResource("1_vehicle")
 [node name="CollisionShape3D" type="CollisionShape3D" parent="."]
 position = Vector3(0, 0.6, 0)
 shape = SubResource("BoxShape_vehicle")
+
+[node name="Visual" type="MeshInstance3D" parent="."]
+position = Vector3(0, 0.6, 0)
+mesh = SubResource("BoxMesh_vehicle")
+material_override = SubResource("Material_vehicle")
