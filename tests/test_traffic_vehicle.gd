@@ -19,6 +19,16 @@ func _initialize() -> void:
 	if not vehicle.has_reported_violation():
 		_fail("Public violation state must report the recorded violation.")
 		return
+	var evidence: Dictionary = vehicle.get_violation_evidence()
+	if String(evidence.get("id", "")) != "speeding":
+		_fail("Traffic vehicle must expose structured speeding evidence.")
+		return
+	if not is_equal_approx(float(evidence.get("observed_speed_kmh", -1.0)), vehicle.traffic_speed_kmh):
+		_fail("Violation evidence must preserve observed speed.")
+		return
+	if not is_equal_approx(float(evidence.get("speed_limit_kmh", -1.0)), vehicle.speed_limit_kmh):
+		_fail("Violation evidence must preserve speed limit.")
+		return
 	if not vehicle._violation_reported:
 		_fail("Speeding vehicle must record a violation.")
 		return
