@@ -1,0 +1,14 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/ui/status_hud.gd" id="1_hud"]
+
+[node name="StatusHUD" type="CanvasLayer"]
+script = ExtResource("1_hud")
+
+[node name="Status" type="Label" parent="."]
+offset_left = 24.0
+offset_top = 20.0
+offset_right = 900.0
+offset_bottom = 110.0
+text = "POLICE SIMULATOR 3D"
+theme_override_font_sizes/font_size = 18
