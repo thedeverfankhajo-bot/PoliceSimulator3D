@@ -83,6 +83,9 @@ jobs:
           grep -q 'func _find_interactable(start: Node)' scripts/player/interaction_detector.gd
           grep -q 'query.exclude = \[get_parent().get_parent().get_rid()\]' scripts/player/interaction_detector.gd
           grep -q 'vehicle.entered.connect(player.enter_vehicle)' scripts/core/main.gd
+          grep -q 'active_mission = mission' scripts/missions/mission_manager.gd
+          grep -q 'if active_mission == mission:' scripts/missions/mission_manager.gd
+          grep -q 'hud.show_mission(mission)' scripts/core/main.gd
           grep -q 'npc.interacted.connect(_on_npc_interacted)' scripts/missions/traffic_stop_scenario.gd
           grep -q 'enter_patrol_vehicle' scripts/missions/traffic_stop_scenario.gd
           grep -q 'TRAFFIC_VEHICLE_SCENE' scripts/core/main.gd
