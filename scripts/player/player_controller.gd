@@ -9,6 +9,7 @@ signal vehicle_exit_blocked()
 @export var acceleration: float = 20.0
 @export var gravity: float = 18.0
 @export var mouse_sensitivity: float = 0.0025
+@export var touch_look_sensitivity: float = 0.004
 
 @onready var camera_pivot: Node3D = $CameraPivot
 @onready var camera: Camera3D = $CameraPivot/Camera3D
@@ -21,6 +22,7 @@ var _active_vehicle: Node
 var _saved_collision_layer := 1
 var _saved_collision_mask := 1
 var _saved_camera_pivot_position := Vector3.ZERO
+var _look_touch_id := -1
 
 func _ready() -> void:
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
@@ -30,11 +32,23 @@ func _ready() -> void:
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventMouseMotion and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
-		rotate_y(-event.relative.x * mouse_sensitivity)
-		_pitch = clamp(_pitch - event.relative.y * mouse_sensitivity, deg_to_rad(-75.0), deg_to_rad(75.0))
-		camera_pivot.rotation.x = _pitch
+		_apply_look(event.relative * mouse_sensitivity)
+	elif event is InputEventScreenTouch:
+		if event.canceled and event.index == _look_touch_id:
+			_look_touch_id = -1
+		elif event.pressed and _look_touch_id == -1 and event.position.x > get_viewport().get_visible_rect().size.x * 0.48:
+			_look_touch_id = event.index
+		elif not event.pressed and event.index == _look_touch_id:
+			_look_touch_id = -1
+	elif event is InputEventScreenDrag and event.index == _look_touch_id:
+		_apply_look(event.relative * touch_look_sensitivity)
 	elif event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_ESCAPE:
 		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+
+func _apply_look(relative: Vector2) -> void:
+	rotate_y(-relative.x)
+	_pitch = clamp(_pitch - relative.y, deg_to_rad(-75.0), deg_to_rad(75.0))
+	camera_pivot.rotation.x = _pitch
 
 func _physics_process(delta: float) -> void:
 	if _active_vehicle != null:
@@ -42,7 +56,7 @@ func _physics_process(delta: float) -> void:
 			exit_vehicle()
 		return
 
-	if Input.mouse_mode != Input.MOUSE_MODE_CAPTURED:
+	if Input.mouse_mode != Input.MOUSE_MODE_CAPTURED and not (OS.has_feature("mobile") or DisplayServer.is_touchscreen_available()):
 		if Input.is_action_just_pressed("interact"):
 			Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 		return
