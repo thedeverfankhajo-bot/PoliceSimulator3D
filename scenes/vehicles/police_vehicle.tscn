@@ -24,6 +24,7 @@ roughness = 0.9
 [node name="PoliceVehicle" type="VehicleBody3D"]
 script = ExtResource("1_vehicle")
 mass = 1400.0
+center_of_mass_mode = 1
 center_of_mass = Vector3(0, -0.35, 0)
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="."]
