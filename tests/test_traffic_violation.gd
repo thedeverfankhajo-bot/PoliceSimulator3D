@@ -32,6 +32,11 @@ func _initialize() -> void:
 	if VIOLATION_SCRIPT.is_valid_evidence(invalid):
 		_fail("Negative excess speed must be rejected.")
 		return
+	invalid = evidence.duplicate(true)
+	invalid["excess_speed_kmh"] = 99.0
+	if VIOLATION_SCRIPT.is_valid_evidence(invalid):
+		_fail("Inconsistent excess speed must be rejected.")
+		return
 
 	print("Traffic violation tests passed.")
 	quit(0)
