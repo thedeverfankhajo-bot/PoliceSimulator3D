@@ -25,7 +25,7 @@ func _physics_process(_delta: float) -> void:
 		global_position.z = loop_start_z
 
 func get_traffic_velocity() -> Vector3:
-	return transform.basis.z * (traffic_speed_kmh / 3.6)
+	return -transform.basis.z * (traffic_speed_kmh / 3.6)
 
 func _check_violation() -> void:
 	if _violation_reported or traffic_speed_kmh <= speed_limit_kmh:
