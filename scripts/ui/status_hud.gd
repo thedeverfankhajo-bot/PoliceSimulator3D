@@ -9,13 +9,13 @@ func set_status(message: String) -> void:
 	status_label.text = message
 
 func show_mission(mission: Mission) -> void:
-	if mission == null:
-		set_status("هیچ مأموریتی فعال نیست.")
-		return
 	if _mission != null and is_instance_valid(_mission):
 		if _mission.objective_completed.is_connected(_on_objective_completed):
 			_mission.objective_completed.disconnect(_on_objective_completed)
 	_mission = mission
+	if _mission == null:
+		set_status("هیچ مأموریتی فعال نیست.")
+		return
 	_mission.objective_completed.connect(_on_objective_completed)
 	_render_mission()
 
