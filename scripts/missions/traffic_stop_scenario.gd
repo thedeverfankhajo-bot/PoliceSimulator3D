@@ -44,6 +44,10 @@ func start(mission_manager: Node) -> bool:
 		vehicle.entered.connect(_on_vehicle_entered)
 	if not traffic_vehicle.stopped.is_connected(_on_traffic_vehicle_stopped):
 		traffic_vehicle.stopped.connect(_on_traffic_vehicle_stopped)
+	if not mission.completed.is_connected(_on_mission_completed):
+		mission.completed.connect(_on_mission_completed, CONNECT_ONE_SHOT)
+	if not mission.failed.is_connected(_on_mission_failed):
+		mission.failed.connect(_on_mission_failed, CONNECT_ONE_SHOT)
 	if not npc.interacted.is_connected(_on_npc_interacted):
 		npc.interacted.connect(_on_npc_interacted)
 	return true
@@ -63,10 +67,16 @@ func _on_npc_interacted(_npc) -> void:
 		return
 	mission.complete_objective(2)
 
+func _on_mission_failed(_reason: String) -> void:
+	_disconnect_signals()
+
 func _is_active() -> bool:
 	return mission != null and mission.status == MISSION_STATE.Status.ACTIVE
 
 func _on_mission_completed() -> void:
+	_disconnect_signals()
+
+func _disconnect_signals() -> void:
 	if is_instance_valid(npc) and npc.interacted.is_connected(_on_npc_interacted):
 		npc.interacted.disconnect(_on_npc_interacted)
 	if is_instance_valid(traffic_vehicle) and traffic_vehicle.stopped.is_connected(_on_traffic_vehicle_stopped):
