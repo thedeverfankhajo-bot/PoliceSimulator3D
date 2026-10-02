@@ -54,6 +54,17 @@ jobs:
           grep -q '^run/main_scene=' project.godot
           grep -q '^\[rendering\]' project.godot
 
+      - name: Validate required gameplay scenes
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f scenes/player/player.tscn
+          test -f scenes/vehicles/police_vehicle.tscn
+          test -f scenes/npcs/civilian_npc.tscn
+          test -f scenes/ui/status_hud.tscn
+          grep -q 'class_name Mission' scripts/missions/mission.gd
+          grep -q 'class_name MissionManager' scripts/missions/mission_manager.gd
+
       - name: Validate text files have no CRLF
         shell: bash
         run: |
