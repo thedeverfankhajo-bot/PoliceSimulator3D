@@ -48,6 +48,7 @@ jobs:
           test -f tests/test_traffic_violation.gd
           test -f export_presets.cfg
           test -f .github/workflows/android-apk.yml
+          test -f assets/icons/police_simulator.svg
 
       - name: Validate Godot project structure without executing the engine
         shell: bash
@@ -55,6 +56,7 @@ jobs:
           set -euo pipefail
           test -f project.godot
           grep -q '^config/name=' project.godot
+          grep -q '^config/icon="res://assets/icons/police_simulator.svg"' project.godot
           grep -q '^run/main_scene=' project.godot
           grep -q '^config/features=.*4\.7' project.godot
           grep -q '^renderer/rendering_method=' project.godot
