@@ -14,7 +14,9 @@ var _joystick_id := -1
 var _joystick_origin := Vector2.ZERO
 var _joystick_vector := Vector2.ZERO
 var _action_id := -1
+var _brake_id := -1
 var _action_center := Vector2.ZERO
+var _brake_center := Vector2.ZERO
 var _visible_on_device := false
 
 func _ready() -> void:
@@ -32,6 +34,7 @@ func _notification(what: int) -> void:
 
 func _layout_controls() -> void:
 	_action_center = Vector2(size.x - 110.0, size.y - 110.0)
+	_brake_center = Vector2(size.x - 110.0, size.y - 235.0)
 
 func _input(event: InputEvent) -> void:
 	if not visible:
@@ -61,6 +64,10 @@ func _handle_touch(event: InputEventScreenTouch) -> void:
 		elif _action_id == -1 and event.position.distance_to(_action_center) <= action_radius * 1.25:
 			_action_id = event.index
 			Input.action_press("interact")
+			get_viewport().set_input_as_handled()
+		elif _brake_id == -1 and event.position.distance_to(_brake_center) <= action_radius * 1.25:
+			_brake_id = event.index
+			Input.action_press("vehicle_brake")
 			get_viewport().set_input_as_handled()
 	else:
 		if event.index == _joystick_id:
@@ -104,9 +111,14 @@ func _release_action() -> void:
 	_action_id = -1
 	Input.action_release("interact")
 
+func _release_brake() -> void:
+	_brake_id = -1
+	Input.action_release("vehicle_brake")
+
 func _release_all_inputs() -> void:
 	_release_movement()
 	_release_action()
+	_release_brake()
 
 func _draw() -> void:
 	_layout_controls()
@@ -115,3 +127,5 @@ func _draw() -> void:
 	draw_circle(base + _joystick_vector * joystick_radius, joystick_radius * 0.42, Color(1, 1, 1, 0.28))
 	draw_circle(_action_center, action_radius, Color(1, 1, 1, 0.16))
 	draw_circle(_action_center, action_radius * 0.62, Color(1, 1, 1, 0.28))
+	draw_circle(_brake_center, action_radius, Color(1, 1, 1, 0.12))
+	draw_circle(_brake_center, action_radius * 0.62, Color(1, 1, 1, 0.24))
