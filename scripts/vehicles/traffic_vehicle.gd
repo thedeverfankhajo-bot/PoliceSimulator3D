@@ -1,7 +1,6 @@
 extends CharacterBody3D
 class_name TrafficVehicle
 
-const TRAFFIC_VIOLATION_SCRIPT := preload("res://scripts/violations/traffic_violation.gd")
 
 signal violation_detected(vehicle: TrafficVehicle, violation: String)
 signal violation_evidence_detected(vehicle: TrafficVehicle, evidence: Dictionary)
