@@ -9,6 +9,11 @@ signal stopped(vehicle: TrafficVehicle)
 @export_range(0.0, 100.0, 1.0) var speed_limit_kmh: float = 50.0
 @export var loop_start_z: float = 18.0
 @export var loop_end_z: float = -24.0
+@export var waypoint_reach_distance: float = 1.5
+@export var turn_speed: float = 5.0
+@export var waypoints: Array[Node3D] = []
+
+var _waypoint_index := 0
 
 var is_stopped := false
 var _violation_reported := false
@@ -20,15 +25,45 @@ func _ready() -> void:
 	_loop_start_position = global_position
 	_loop_reset_rotation = global_transform.basis
 
-func _physics_process(_delta: float) -> void:
+func _physics_process(delta: float) -> void:
 	if is_stopped:
 		velocity = Vector3.ZERO
 		return
-	velocity = get_traffic_velocity()
-	move_and_slide()
+	if waypoints.is_empty():
+		velocity = get_traffic_velocity()
+		move_and_slide()
+		_check_violation()
+		if global_position.z <= loop_end_z:
+			_reset_to_loop_start()
+		return
+	_follow_waypoints(delta)
 	_check_violation()
-	if global_position.z <= loop_end_z:
-		_reset_to_loop_start()
+
+func _follow_waypoints(delta: float) -> void:
+	if _waypoint_index >= waypoints.size():
+		_waypoint_index = 0
+	var target := waypoints[_waypoint_index]
+	if not is_instance_valid(target):
+		waypoints.remove_at(_waypoint_index)
+		if waypoints.is_empty():
+			return
+		_waypoint_index %= waypoints.size()
+		target = waypoints[_waypoint_index]
+	var offset := target.global_position - global_position
+	offset.y = 0.0
+	if offset.length() <= waypoint_reach_distance:
+		_waypoint_index = (_waypoint_index + 1) % waypoints.size()
+		target = waypoints[_waypoint_index]
+		offset = target.global_position - global_position
+		offset.y = 0.0
+	if offset.length_squared() <= 0.001:
+		velocity = Vector3.ZERO
+		return
+	var direction := offset.normalized()
+	velocity = direction * (traffic_speed_kmh / 3.6)
+	var target_yaw := atan2(-direction.x, -direction.z)
+	rotation.y = lerp_angle(rotation.y, target_yaw, clamp(turn_speed * delta, 0.0, 1.0))
+	move_and_slide()
 
 func _reset_to_loop_start() -> void:
 	var reset_position := _loop_start_position
