@@ -12,7 +12,8 @@ func start_mission(mission) -> bool:
 	if not mission.start():
 		return false
 	active_mission = mission
-	mission.completed.connect(_on_mission_completed.bind(mission), CONNECT_ONE_SHOT)
+	if not mission.completed.is_connected(_on_mission_completed):
+		mission.completed.connect(_on_mission_completed, CONNECT_ONE_SHOT)
 	mission_started.emit(mission)
 	return true
 
