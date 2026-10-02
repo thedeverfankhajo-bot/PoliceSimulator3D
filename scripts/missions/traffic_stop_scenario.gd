@@ -7,19 +7,23 @@ class_name TrafficStopScenario
 
 const MISSION_SCRIPT := preload("res://scripts/missions/mission.gd")
 const MISSION_STATE := preload("res://scripts/missions/mission_state.gd")
+const TRAFFIC_VIOLATION_SCRIPT := preload("res://scripts/violations/traffic_violation.gd")
+
+signal violation_evidence_confirmed(evidence: Dictionary)
 
 var mission
 var vehicle: Node
 var traffic_vehicle: Node
 var npc: Node
 var _mission_timer: Timer
+var _violation_evidence: Dictionary = {}
 
 func setup(target_vehicle: Node, target_traffic_vehicle: Node, target_npc: Node) -> bool:
 	if target_vehicle == null or target_traffic_vehicle == null or target_npc == null:
 		return false
 	if not target_vehicle.has_signal("entered"):
 		return false
-	if not target_traffic_vehicle.has_signal("stopped"):
+	if not target_traffic_vehicle.has_signal("stopped") or not target_traffic_vehicle.has_method("has_reported_violation"):
 		return false
 	if not target_npc.has_signal("interacted"):
 		return false
@@ -46,6 +50,8 @@ func start(mission_manager: Node) -> bool:
 		vehicle.entered.connect(_on_vehicle_entered)
 	if not traffic_vehicle.stopped.is_connected(_on_traffic_vehicle_stopped):
 		traffic_vehicle.stopped.connect(_on_traffic_vehicle_stopped)
+	if traffic_vehicle.has_signal("violation_evidence_detected") and not traffic_vehicle.violation_evidence_detected.is_connected(_on_violation_evidence_detected):
+		traffic_vehicle.violation_evidence_detected.connect(_on_violation_evidence_detected)
 	if not mission.completed.is_connected(_on_mission_completed):
 		mission.completed.connect(_on_mission_completed, CONNECT_ONE_SHOT)
 	if not mission.failed.is_connected(_on_mission_failed):
@@ -63,6 +69,14 @@ func start(mission_manager: Node) -> bool:
 	_mission_timer.start()
 	return true
 
+func _on_violation_evidence_detected(_detected_vehicle, evidence: Dictionary) -> void:
+	if not _is_active() or _detected_vehicle != traffic_vehicle:
+		return
+	if not TRAFFIC_VIOLATION_SCRIPT.is_valid_evidence(evidence):
+		return
+	_violation_evidence = evidence.duplicate(true)
+	violation_evidence_confirmed.emit(_violation_evidence.duplicate(true))
+
 func _on_vehicle_entered(entered_vehicle) -> void:
 	if not _is_active() or entered_vehicle != vehicle:
 		return
@@ -73,7 +87,9 @@ func _on_traffic_vehicle_stopped(stopped_vehicle) -> void:
 		return
 	if stopped_vehicle != traffic_vehicle:
 		return
-	if not traffic_vehicle.has_method("has_reported_violation") or not traffic_vehicle.has_reported_violation():
+	if not TRAFFIC_VIOLATION_SCRIPT.is_valid_evidence(_violation_evidence):
+		return
+	if not traffic_vehicle.has_reported_violation():
 		return
 	mission.complete_objective(1)
 
@@ -110,5 +126,7 @@ func _disconnect_signals() -> void:
 		npc.interacted.disconnect(_on_npc_interacted)
 	if is_instance_valid(traffic_vehicle) and traffic_vehicle.stopped.is_connected(_on_traffic_vehicle_stopped):
 		traffic_vehicle.stopped.disconnect(_on_traffic_vehicle_stopped)
+	if is_instance_valid(traffic_vehicle) and traffic_vehicle.has_signal("violation_evidence_detected") and traffic_vehicle.violation_evidence_detected.is_connected(_on_violation_evidence_detected):
+		traffic_vehicle.violation_evidence_detected.disconnect(_on_violation_evidence_detected)
 	if is_instance_valid(vehicle) and vehicle.entered.is_connected(_on_vehicle_entered):
 		vehicle.entered.disconnect(_on_vehicle_entered)
