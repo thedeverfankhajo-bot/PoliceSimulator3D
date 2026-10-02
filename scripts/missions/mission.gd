@@ -34,6 +34,14 @@ func configure(objectives: Array[Dictionary]) -> bool:
 		_completed[i] = false
 	return true
 
+func get_objectives() -> Array[Dictionary]:
+	return _objectives.duplicate(true)
+
+func is_objective_completed(index: int) -> bool:
+	if index < 0 or index >= _completed.size():
+		return false
+	return _completed[index]
+
 func start() -> bool:
 	if status != MissionState.Status.AVAILABLE or _objectives.is_empty():
 		return false
