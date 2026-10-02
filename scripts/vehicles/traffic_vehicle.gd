@@ -16,6 +16,8 @@ signal stopped(vehicle: TrafficVehicle)
 @export var waypoint_reach_distance: float = 1.5
 @export var turn_speed: float = 5.0
 @export var waypoints: Array[Node3D] = []
+@export var traffic_light: Node
+@export var obey_traffic_light := false
 
 var _waypoint_index := 0
 
@@ -25,13 +27,17 @@ var _violation_evidence: Dictionary = {}
 var _loop_start_position := Vector3.ZERO
 var _loop_reset_rotation := Basis.IDENTITY
 var _spawn_initialized := false
+var _last_z := 0.0
+var _red_light_reported := false
 
 
 func _ready() -> void:
 	_loop_start_position = global_position
 	_loop_reset_rotation = global_transform.basis
+	_last_z = global_position.z
 
 func _physics_process(delta: float) -> void:
+	var previous_z := global_position.z
 	if not _spawn_initialized:
 		_loop_start_position = global_position
 		_loop_reset_rotation = global_transform.basis
@@ -43,11 +49,13 @@ func _physics_process(delta: float) -> void:
 		velocity = get_traffic_velocity()
 		move_and_slide()
 		_check_violation()
+		_check_red_light_violation(previous_z)
 		if global_position.z <= loop_end_z:
 			_reset_to_loop_start()
 		return
 	_follow_waypoints(delta)
 	_check_violation()
+	_check_red_light_violation(previous_z)
 
 func _follow_waypoints(delta: float) -> void:
 	if _waypoint_index >= waypoints.size():
@@ -98,6 +106,20 @@ func _check_violation() -> void:
 		return
 	violation_detected.emit(self, String(_violation_evidence["title"]))
 	violation_evidence_detected.emit(self, _violation_evidence.duplicate(true))
+
+func _check_red_light_violation(previous_z: float) -> void:
+	if _red_light_reported or traffic_light == null or not is_instance_valid(traffic_light):
+		return
+	if not traffic_light.has_method("is_red") or not traffic_light.is_red():
+		return
+	if not traffic_light.has_method("get_stop_line_z"):
+		return
+	var stop_line_z := float(traffic_light.get_stop_line_z())
+	if previous_z > stop_line_z and global_position.z <= stop_line_z and not obey_traffic_light:
+		_red_light_reported = true
+		var evidence := TRAFFIC_VIOLATION_SCRIPT.create_red_light_evidence(traffic_light.get_light_id(), stop_line_z)
+		violation_detected.emit(self, String(evidence["title"]))
+		violation_evidence_detected.emit(self, evidence.duplicate(true))
 
 func has_reported_violation() -> bool:
 	return _violation_reported
