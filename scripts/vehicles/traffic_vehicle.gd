@@ -35,6 +35,7 @@ func _reset_to_loop_start() -> void:
 	reset_position.z = loop_start_z
 	global_position = reset_position
 	global_transform.basis = _loop_reset_rotation
+	_violation_reported = false
 	velocity = get_traffic_velocity()
 
 func get_traffic_velocity() -> Vector3:
