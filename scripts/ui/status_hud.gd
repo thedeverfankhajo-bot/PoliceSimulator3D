@@ -5,3 +5,6 @@ class_name StatusHud
 
 func set_status(message: String) -> void:
 	status_label.text = message
+
+func show_mission(mission: Mission) -> void:
+	set_status("%s\n%s" % [mission.title, mission.description])
