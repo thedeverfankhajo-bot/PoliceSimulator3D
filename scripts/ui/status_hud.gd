@@ -12,12 +12,19 @@ func show_mission(mission) -> void:
 	if _mission != null and is_instance_valid(_mission):
 		if _mission.objective_completed.is_connected(_on_objective_completed):
 			_mission.objective_completed.disconnect(_on_objective_completed)
+		if _mission.status_changed.is_connected(_on_mission_status_changed):
+			_mission.status_changed.disconnect(_on_mission_status_changed)
 	_mission = mission
 	if _mission == null:
 		set_status("هیچ مأموریتی فعال نیست.")
 		return
 	if not _mission.objective_completed.is_connected(_on_objective_completed):
 		_mission.objective_completed.connect(_on_objective_completed)
+	if not _mission.status_changed.is_connected(_on_mission_status_changed):
+		_mission.status_changed.connect(_on_mission_status_changed)
+	_render_mission()
+
+func _on_mission_status_changed(_status: int) -> void:
 	_render_mission()
 
 func _on_objective_completed(_index: int) -> void:
