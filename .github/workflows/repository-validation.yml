@@ -46,6 +46,8 @@ jobs:
           test -f scripts/missions/mission_manager.gd
           test -f scripts/violations/traffic_violation.gd
           test -f tests/test_traffic_violation.gd
+          test -f export_presets.cfg
+          test -f .github/workflows/android-apk.yml
 
       - name: Validate Godot project structure without executing the engine
         shell: bash
@@ -112,6 +114,12 @@ jobs:
           grep -q 'persist-credentials: false' .github/workflows/repository-validation.yml
           grep -q '^permissions:' .github/workflows/repository-validation.yml
           grep -q 'contents: read' .github/workflows/repository-validation.yml
+          grep -Eq 'uses: actions/checkout@[0-9a-f]{40}' .github/workflows/android-apk.yml
+          grep -Eq 'uses: actions/setup-java@[0-9a-f]{40}' .github/workflows/android-apk.yml
+          grep -Eq 'uses: actions/upload-artifact@[0-9a-f]{40}' .github/workflows/android-apk.yml
+          grep -q 'name="Android Debug APK"' export_presets.cfg
+          grep -q 'platform="Android"' export_presets.cfg
+          grep -q 'package/unique_name="com.policesimulator3d.game"' export_presets.cfg
 
       - name: Run Godot mission tests
         shell: bash
