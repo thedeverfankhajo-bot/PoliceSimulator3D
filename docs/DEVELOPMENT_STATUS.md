@@ -31,8 +31,9 @@ No feature is complete until it has been implemented, reviewed against the relev
 
 ## Current CI verification
 
-- Latest main validation run: #132, commit `d46dd49c815609dc1ac3e9709889d2c503613ebb`, completed successfully.
-- Previous run #131 on `0cc274c6b2169938b125f50f22947df4c1f3fcae` also completed successfully.
+- Validation run #162 on commit `2cb0d7a51c7ab69d52c8e8f2fdfb08a2b937d464` completed successfully.
+- Godot mission tests, traffic-vehicle tests, all-GDScript parse validation, main-scene smoke test, gameplay-contract checks, and CRLF validation all passed in that run.
+- A follow-up mission-manager typing hardening commit is now queued for the next validation run.
 
 ## Known verification gaps
 
