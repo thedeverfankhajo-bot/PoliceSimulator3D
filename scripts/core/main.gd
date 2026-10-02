@@ -10,15 +10,18 @@ const SCENARIO_SCRIPT := preload("res://scripts/missions/traffic_stop_scenario.g
 @onready var hud: StatusHud = $StatusHUD
 
 var mission_manager: MissionManager
+var player: PlayerController
 
 func _ready() -> void:
-	var player := PLAYER_SCENE.instantiate()
+	player = PLAYER_SCENE.instantiate()
 	player.global_position = player_spawn.global_position
 	add_child(player)
+	player.vehicle_exit_blocked.connect(_on_vehicle_exit_blocked)
 
 	var vehicle: PoliceVehicle = VEHICLE_SCENE.instantiate()
 	vehicle.global_position = Vector3(0, 0, -8)
 	add_child(vehicle)
+	vehicle.entered.connect(player.enter_vehicle)
 
 	var npc: CivilianNPC = NPC_SCENE.instantiate()
 	npc.global_position = Vector3(3, 0, -8)
@@ -41,3 +44,6 @@ func _ready() -> void:
 
 func _on_mission_completed(mission: Mission) -> void:
 	hud.set_status("ماموریت کامل شد: %s" % mission.title)
+
+func _on_vehicle_exit_blocked() -> void:
+	push_warning("Vehicle exit blocked: no safe space for the player.")
