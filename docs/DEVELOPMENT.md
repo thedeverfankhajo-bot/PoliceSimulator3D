@@ -51,3 +51,14 @@ Current candidates reviewed for this project:
 - **Prototype Texture Materials** — MIT, Godot 4.7, a candidate for placeholder material quality while the final environment art pipeline is built.
 
 Do not copy paid/proprietary assets or undocumented downloads into Git. Record the source, version, license, and compatibility before committing imported assets.
+
+
+## Asset pipeline
+
+Use the official Godot Asset Library/Asset Store as the first source for reusable game assets. Before importing an asset, record its source, version, license, Godot compatibility, texture size, and mobile suitability. Do not commit paid/proprietary assets without the required license.
+
+For this prototype, visual replacement should be incremental: keep gameplay scenes independent from art assets, then replace placeholder meshes/materials with licensed environment, road, vehicle, and prop assets. Prefer assets with permissive licenses and mobile-friendly texture/material budgets. Profile on a real Android device after each major art batch.
+
+## Mobile input
+
+Gameplay systems consume InputMap actions rather than platform-specific touch events. The mobile control layer maps touch gestures/buttons to those actions and releases every held action when a touch is cancelled or the window loses focus.
