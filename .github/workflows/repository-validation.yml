@@ -132,7 +132,12 @@ jobs:
         run: |
           set -euo pipefail
           GODOT_BIN=".godot-ci/Godot_v4.7.2-stable_linux.x86_64"
-          "$GODOT_BIN" --headless --path . --quit-after 120
+          LOG_FILE=".godot-ci/main-scene.log"
+          timeout 60s "$GODOT_BIN" --headless --path . --quit-after 120 2>&1 | tee "$LOG_FILE"
+          if grep -Eq 'ERROR:|SCRIPT ERROR|instances were leaked|RID allocations.*leaked' "$LOG_FILE"; then
+            echo "Godot smoke test emitted an engine/script error."
+            exit 1
+          fi
 
       - name: Validate text files have no CRLF
         shell: bash
