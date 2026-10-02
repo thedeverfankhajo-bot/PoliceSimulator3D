@@ -8,7 +8,15 @@ class_name InteractionDetector
 signal interacted(target: Node)
 signal interaction_missed()
 
+func _physics_process(_delta: float) -> void:
+	if Input.is_action_just_pressed("interact"):
+		try_interact()
+
 func try_interact() -> void:
+	if camera == null:
+		interaction_missed.emit()
+		return
+
 	var from := camera.global_position
 	var to := from + (-camera.global_transform.basis.z * interaction_distance)
 	var query := PhysicsRayQueryParameters3D.create(from, to, collision_mask)
@@ -19,8 +27,8 @@ func try_interact() -> void:
 		interaction_missed.emit()
 		return
 
-	var target: Node = result["collider"]
-	if target.has_method("interact"):
+	var target := result.get("collider") as Node
+	if target != null and target.has_method("interact"):
 		target.interact()
 		interacted.emit(target)
 	else:
