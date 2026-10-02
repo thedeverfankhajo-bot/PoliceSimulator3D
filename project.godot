@@ -1,5 +1,5 @@
-; PoliceSimulator3D — Godot 4.7 project configuration
-; Engine version is pinned by project documentation/CI policy.
+; PoliceSimulator3D — Godot 4.7.2 project configuration
+; Stable engine target: Godot 4.7.2.
 ; Do not add secrets or export credentials to this file.
 
 config_version=5
@@ -11,7 +11,6 @@ run/main_scene="res://scenes/main/main.tscn"
 config/features=PackedStringArray("4.7", "Mobile")
 
 [display]
-
 [display/window]
 size/viewport_width=1280
 size/viewport_height=720
@@ -39,4 +38,8 @@ move_left={
 move_right={
 "deadzone": 0.5,
 "events": [Object(InputEventKey,"physical_keycode":68)]
+}
+interact={
+"deadzone": 0.5,
+"events": [Object(InputEventKey,"physical_keycode":69)]
 }
