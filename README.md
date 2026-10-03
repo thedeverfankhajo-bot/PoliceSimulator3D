@@ -59,4 +59,4 @@ See [SECURITY.md](SECURITY.md). Security issues should be reported privately rat
 
 ## License
 
-The original source code of this project is licensed under the [MIT License](LICENSE).
+The original source code of this project is licensed under the [MIT License](LICENSE). See `docs/CITATIONS.md` for third-party asset provenance and licensing.
