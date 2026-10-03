@@ -6,6 +6,8 @@ signal loaded
 const PATH: String = "user://savegame.cfg"
 const VERSION: int = 1
 const DEFAULT_POSITION: Vector3 = Vector3(0, 0.9, 8)
+const MAX_XP: int = 1000000
+const MAX_POSITION_ABS: float = 100000.0
 
 var data: Dictionary[String, Variant] = {
 	"version": VERSION,
@@ -44,16 +46,32 @@ func load_game() -> bool:
 	var version: int = int(cfg.get_value("save", "version", 0))
 	if version != VERSION:
 		return false
-	data["xp"] = int(cfg.get_value("save", "xp", 0))
+
+	var xp: int = int(cfg.get_value("save", "xp", -1))
+	var position := Vector3(
+		float(cfg.get_value("save", "position_x", NAN)),
+		float(cfg.get_value("save", "position_y", NAN)),
+		float(cfg.get_value("save", "position_z", NAN))
+	)
+	if xp < 0 or xp > MAX_XP or not _is_safe_position(position):
+		return false
+
+	data["xp"] = xp
 	data["rank"] = String(cfg.get_value("save", "rank", "کارآموز"))
 	data["mission_completed"] = bool(cfg.get_value("save", "mission_completed", false))
-	data["last_position"] = Vector3(
-		float(cfg.get_value("save", "position_x", DEFAULT_POSITION.x)),
-		float(cfg.get_value("save", "position_y", DEFAULT_POSITION.y)),
-		float(cfg.get_value("save", "position_z", DEFAULT_POSITION.z))
-	)
+	data["last_position"] = position
 	loaded.emit()
 	return true
+
+func _is_safe_position(position: Vector3) -> bool:
+	return (
+		is_finite(position.x)
+		and is_finite(position.y)
+		and is_finite(position.z)
+		and abs(position.x) <= MAX_POSITION_ABS
+		and abs(position.y) <= MAX_POSITION_ABS
+		and abs(position.z) <= MAX_POSITION_ABS
+	)
 
 func has_save() -> bool:
 	return FileAccess.file_exists(PATH)
