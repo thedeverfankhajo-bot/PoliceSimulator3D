@@ -1,15 +1,15 @@
 # PoliceSimulator3D
 
-A modular 3D police simulation game built with Godot 4.7. The project is currently in active early gameplay development and is not presented as a finished commercial game.
+PoliceSimulator3D is an open-source, modular 3D police simulation game built with Godot 4.7.
 
-## Current verified scope
+## Current status
 
-The current vertical slice includes:
+This repository is in active early gameplay development and is not presented as a finished commercial-quality game. The current verified vertical slice includes:
 
 - first-person player movement and interaction;
 - police vehicle entry/exit;
 - mobile input with a dedicated brake action;
-- traffic movement and waypoint support;
+- traffic vehicle movement and waypoint support;
 - speeding detection and structured violation evidence;
 - traffic-stop mission lifecycle and timeout handling;
 - mission/status/help HUDs;
@@ -37,15 +37,13 @@ scenes/       Godot scenes
 scripts/      Runtime and gameplay code
 data/         Data-driven game definitions
 tests/        Automated tests
-addons/       Third-party Godot addons, if any
-examples/     Small isolated examples when useful
 docs/         Architecture and development documentation
 .github/      CI and repository automation
 ```
 
 ## Development and verification
 
-Changes are kept small and are verified through the repository's automated checks before being treated as complete. Godot engine/platform behavior is checked against the official Godot documentation where relevant. GitHub Actions is used for repository validation, regression checks, and Android debug export.
+Changes are kept small and are verified through the repository's automated checks before being treated as complete. Godot engine/platform behavior is checked against official Godot documentation where relevant. GitHub Actions is used for repository validation, regression checks, and Android debug export.
 
 A successful Linux/headless CI run does **not** prove that the game is fully compatible with every Android device. Real-device Android testing remains a separate release gate.
 
