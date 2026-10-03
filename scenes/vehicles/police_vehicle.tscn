@@ -1,75 +1,88 @@
-[gd_scene load_steps=15 format=3]
+[gd_scene load_steps=20 format=3]
 
 [ext_resource type="Script" path="res://scripts/vehicles/police_vehicle.gd" id="1_vehicle"]
 
 [sub_resource type="BoxShape3D" id="BoxShape_vehicle"]
 size = Vector3(2.0, 1.2, 4.2)
-
 [sub_resource type="BoxMesh" id="BoxMesh_vehicle"]
 size = Vector3(2.0, 1.2, 4.2)
-
 [sub_resource type="StandardMaterial3D" id="Material_vehicle"]
-albedo_color = Color(0.06, 0.08, 0.12, 1)
-roughness = 0.75
-
+albedo_color = Color(0.035, 0.055, 0.085, 1)
+roughness = 0.58
+metallic = 0.2
+[sub_resource type="BoxMesh" id="BoxMesh_hood"]
+size = Vector3(1.7, 0.18, 1.25)
+[sub_resource type="StandardMaterial3D" id="Material_white"]
+albedo_color = Color(0.88, 0.9, 0.92, 1)
+roughness = 0.48
 [sub_resource type="CylinderMesh" id="WheelMesh"]
 top_radius = 0.38
 bottom_radius = 0.38
 height = 0.22
-
 [sub_resource type="StandardMaterial3D" id="WheelMaterial"]
-albedo_color = Color(0.015, 0.015, 0.018, 1)
-roughness = 0.9
-
+albedo_color = Color(0.012, 0.014, 0.018, 1)
+roughness = 0.92
 [sub_resource type="BoxMesh" id="BoxMesh_roof"]
 size = Vector3(1.5, 0.22, 1.0)
 [sub_resource type="StandardMaterial3D" id="Material_roof"]
-albedo_color = Color(0.035, 0.045, 0.07, 1)
-roughness = 0.35
+albedo_color = Color(0.03, 0.04, 0.065, 1)
+roughness = 0.32
 [sub_resource type="BoxMesh" id="BoxMesh_window"]
 size = Vector3(1.55, 0.42, 1.65)
 [sub_resource type="StandardMaterial3D" id="Material_window"]
-albedo_color = Color(0.035, 0.10, 0.14, 1)
-metallic = 0.15
-roughness = 0.2
+albedo_color = Color(0.025, 0.095, 0.14, 1)
+metallic = 0.18
+roughness = 0.16
 [sub_resource type="BoxMesh" id="BoxMesh_bar"]
 size = Vector3(1.35, 0.16, 0.34)
 [sub_resource type="StandardMaterial3D" id="Material_bar"]
-albedo_color = Color(0.85, 0.9, 0.95, 1)
+albedo_color = Color(0.78, 0.84, 0.92, 1)
 emission_enabled = true
-emission = Color(0.7, 0.8, 1, 1)
-emission_energy_multiplier = 2.0
+emission = Color(0.35, 0.55, 1, 1)
+emission_energy_multiplier = 2.5
+[sub_resource type="BoxMesh" id="BoxMesh_bumper"]
+size = Vector3(2.05, 0.24, 0.22)
+[sub_resource type="StandardMaterial3D" id="Material_bumper"]
+albedo_color = Color(0.08, 0.09, 0.10, 1)
+metallic = 0.65
+roughness = 0.34
 
 [node name="PoliceVehicle" type="VehicleBody3D" groups=["police_vehicle"]]
 script = ExtResource("1_vehicle")
 mass = 1400.0
 center_of_mass_mode = 1
 center_of_mass = Vector3(0, -0.35, 0)
-
 [node name="CollisionShape3D" type="CollisionShape3D" parent="."]
 position = Vector3(0, 0.6, 0)
 shape = SubResource("BoxShape_vehicle")
-
 [node name="Visual" type="MeshInstance3D" parent="."]
 position = Vector3(0, 0.6, 0)
 mesh = SubResource("BoxMesh_vehicle")
 material_override = SubResource("Material_vehicle")
-
+[node name="Hood" type="MeshInstance3D" parent="."]
+position = Vector3(0, 1.23, -1.25)
+mesh = SubResource("BoxMesh_hood")
+material_override = SubResource("Material_white")
 [node name="Roof" type="MeshInstance3D" parent="."]
-position = Vector3(0, 1.35, 0.0)
+position = Vector3(0, 1.35, 0)
 mesh = SubResource("BoxMesh_roof")
 material_override = SubResource("Material_roof")
-
 [node name="WindowBand" type="MeshInstance3D" parent="."]
 position = Vector3(0, 1.05, -0.15)
 mesh = SubResource("BoxMesh_window")
 material_override = SubResource("Material_window")
-
 [node name="LightBar" type="MeshInstance3D" parent="."]
 position = Vector3(0, 1.5, -0.05)
 mesh = SubResource("BoxMesh_bar")
 material_override = SubResource("Material_bar")
-
+[node name="FrontBumper" type="MeshInstance3D" parent="."]
+position = Vector3(0, 0.28, -2.13)
+mesh = SubResource("BoxMesh_bumper")
+material_override = SubResource("Material_bumper")
+[node name="RearBumper" type="MeshInstance3D" parent="."]
+position = Vector3(0, 0.28, 2.13)
+mesh = SubResource("BoxMesh_bumper")
+material_override = SubResource("Material_bumper")
 [node name="FrontLeftWheel" type="VehicleWheel3D" parent="."]
 position = Vector3(-0.85, 0.38, -1.35)
 wheel_radius = 0.38
@@ -78,7 +91,6 @@ suspension_travel = 0.2
 use_as_traction = false
 use_as_steering = true
 wheel_friction_slip = 1.0
-
 [node name="FrontRightWheel" type="VehicleWheel3D" parent="."]
 position = Vector3(0.85, 0.38, -1.35)
 wheel_radius = 0.38
@@ -87,7 +99,6 @@ suspension_travel = 0.2
 use_as_traction = false
 use_as_steering = true
 wheel_friction_slip = 1.0
-
 [node name="RearLeftWheel" type="VehicleWheel3D" parent="."]
 position = Vector3(-0.85, 0.38, 1.35)
 wheel_radius = 0.38
@@ -96,7 +107,6 @@ suspension_travel = 0.2
 use_as_traction = true
 use_as_steering = false
 wheel_friction_slip = 1.0
-
 [node name="RearRightWheel" type="VehicleWheel3D" parent="."]
 position = Vector3(0.85, 0.38, 1.35)
 wheel_radius = 0.38
@@ -105,36 +115,30 @@ suspension_travel = 0.2
 use_as_traction = true
 use_as_steering = false
 wheel_friction_slip = 1.0
-
 [node name="WheelVisualFrontLeft" type="MeshInstance3D" parent="."]
 position = Vector3(-0.85, 0.38, -1.35)
 rotation_degrees = Vector3(0, 0, 90)
 mesh = SubResource("WheelMesh")
 material_override = SubResource("WheelMaterial")
-
 [node name="WheelVisualFrontRight" type="MeshInstance3D" parent="."]
 position = Vector3(0.85, 0.38, -1.35)
 rotation_degrees = Vector3(0, 0, 90)
 mesh = SubResource("WheelMesh")
 material_override = SubResource("WheelMaterial")
-
 [node name="WheelVisualRearLeft" type="MeshInstance3D" parent="."]
 position = Vector3(-0.85, 0.38, 1.35)
 rotation_degrees = Vector3(0, 0, 90)
 mesh = SubResource("WheelMesh")
 material_override = SubResource("WheelMaterial")
-
 [node name="WheelVisualRearRight" type="MeshInstance3D" parent="."]
 position = Vector3(0.85, 0.38, 1.35)
 rotation_degrees = Vector3(0, 0, 90)
 mesh = SubResource("WheelMesh")
 material_override = SubResource("WheelMaterial")
-
 [node name="SirenLight" type="OmniLight3D" parent="."]
 position = Vector3(0, 1.45, -0.15)
 omni_range = 7.0
 light_energy = 0.0
 shadow_enabled = false
-
 [node name="ExitPoint" type="Marker3D" parent="."]
 position = Vector3(2.2, 0.0, 0.0)
