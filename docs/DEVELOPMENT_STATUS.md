@@ -27,6 +27,14 @@ The project is an active early-development Godot 4.7 police-simulator vertical s
 
 A successful headless Linux Godot test proves only the behavior covered by that test environment. It does not prove visual quality, every Android-device configuration, touch behavior on every screen size, GPU performance, or store-release readiness. Android real-device testing remains a separate gate.
 
+## Repository quality and licensing work
+
+The original project source code is now licensed under the MIT License in the repository root. This license does not automatically apply to third-party assets, addons, fonts, sounds, models, textures, or other dependencies.
+
+Third-party material must have a known source and compatible usage terms before redistribution. Provenance and license information belongs in `docs/CITATIONS.md`.
+
+The repository also uses GitHub Actions validation, Dependabot for GitHub Actions updates, security guidance, and focused Conventional Commits as part of the maintenance workflow.
+
 ## Known development gaps
 
 These are active development areas rather than claims of completed functionality:
