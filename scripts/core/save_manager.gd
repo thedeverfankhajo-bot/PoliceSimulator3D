@@ -28,10 +28,10 @@ func save_game(player: Node = null, career: Object = null, mission_completed: bo
 	cfg.set_value("save", "xp", int(data["xp"]))
 	cfg.set_value("save", "rank", String(data["rank"]))
 	cfg.set_value("save", "mission_completed", bool(data["mission_completed"]))
-	var p: Vector3 = data["last_position"] as Vector3
-	cfg.set_value("save", "position_x", p.x)
-	cfg.set_value("save", "position_y", p.y)
-	cfg.set_value("save", "position_z", p.z)
+	var position: Vector3 = data["last_position"] as Vector3
+	cfg.set_value("save", "position_x", position.x)
+	cfg.set_value("save", "position_y", position.y)
+	cfg.set_value("save", "position_z", position.z)
 	var err: Error = cfg.save(PATH)
 	if err == OK:
 		saved.emit()
