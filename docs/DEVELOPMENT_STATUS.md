@@ -1,35 +1,55 @@
 # Development status
 
-## Current verified baseline
+## Verified repository baseline
 
-The repository currently has a playable early vertical slice built around a traffic-stop mission.
+The project is an active early-development Godot 4.7 police-simulator vertical slice. It is not yet a finished game and the current procedural 3D content is intentionally lightweight while gameplay architecture is being expanded.
 
-Implemented and verified:
+### Implemented
 
 - first-person player movement and interaction;
 - police vehicle entry/exit;
 - mobile input including a dedicated brake action;
-- traffic vehicle movement and waypoint support;
-- speeding detection;
-- validated structured violation evidence;
+- traffic movement and waypoint support;
+- speeding detection with structured violation evidence;
 - traffic-stop mission lifecycle and timeout handling;
-- mission HUD updates;
-- headless Mission, Traffic Vehicle, and Traffic Violation tests;
-- full GDScript parse validation;
-- main-scene smoke testing;
-- GitHub Actions security and structure gates.
+- mission/status/help HUD separation;
+- procedural starter-city composition;
+- procedural police-vehicle and civilian-NPC geometry;
+- police-station interior dressing;
+- settings persistence and reset support;
+- save/continue infrastructure and auto-save setting;
+- main-menu settings and tutorial panels;
+- GitHub Actions repository validation;
+- career regression checks;
+- Android debug APK export and artifact inspection in CI.
 
-The latest repository-validation run completed successfully after the violation-evidence, Android export, and mission-integration hardening. A debug Android APK is now built automatically in GitHub Actions and uploaded as an artifact.
+### Important verification boundary
 
-## Newly completed in this iteration
+A successful headless Linux Godot test proves only the behavior covered by that test environment. It does not prove visual quality, every Android-device configuration, touch behavior on every screen size, GPU performance, or store-release readiness. Android real-device testing remains a separate gate.
 
-- procedural starter city composition with road, sidewalks, buildings, crosswalks, signs, and street lights;
-- clearer mission/status/help HUD separation;
-- police emergency siren input and flashing emergency light;
-- Android debug export rebuilt after gameplay changes and verified by CI.
+## Known development gaps
 
-## Next development targets
+These are active development areas rather than claims of completed functionality:
 
-The next gameplay expansion should add real world sensors and tests for additional violations such as red-light, stop-sign, and wrong-way behavior. Each new violation must follow the evidence contract and must not bypass mission validation.
+- replace more procedural placeholder geometry with licensed, documented production assets;
+- expand the city into a larger navigable environment with more varied buildings, roads, interiors, pedestrians, and traffic;
+- deepen police-station interactions and interior gameplay;
+- expand civilian and police NPC behavior and animation;
+- add additional evidence-backed traffic violations and mission types;
+- expand settings into display, accessibility, control, audio, and graphics options that are actually wired to runtime behavior;
+- improve in-game tutorial guidance and contextual help;
+- expand save data coverage and add explicit save/load regression tests;
+- perform Android real-device profiling and memory/GPU testing;
+- continue UI, lighting, materials, audio, VFX, and performance work without claiming optimization until measured.
 
-Android export and real-device profiling remain separate release gates; the Linux headless CI job does not prove Android runtime compatibility.
+## Verification policy
+
+Every behavior change should be followed by the smallest relevant Godot tests and repository validation. GitHub Actions results are reported from the actual workflow state; queued or running jobs are not reported as successful.
+
+## Release policy
+
+Only intentionally versioned source files belong in Git. Generated exports and build artifacts remain CI artifacts unless a release process explicitly requires them. Android debug APKs are validation artifacts, not release builds.
+
+## Asset policy
+
+Third-party assets must have a known source, license/usage terms, attribution requirements, and repository path recorded in `docs/CITATIONS.md` before they are treated as project assets.
