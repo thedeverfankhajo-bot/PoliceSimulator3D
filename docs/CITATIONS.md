@@ -26,11 +26,13 @@ If redistribution rights are unclear, do not commit the asset.
 ## Official technical references
 
 - Godot documentation: https://docs.godotengine.org/
+- Godot GDScript style guide: https://docs.godotengine.org/en/stable/tutorials/scripting/gdscript/gdscript_styleguide.html
+- Godot best practices: https://docs.godotengine.org/en/stable/tutorials/best_practices/index.html
 - Godot Asset Library: https://godotengine.org/asset-library/
 - GitHub documentation: https://docs.github.com/
 - GitHub licensing guidance: https://docs.github.com/en/repositories/creating-and-managing-repositories/licensing-a-repository
 - GitHub security guidance: https://docs.github.com/en/code-security/
-- Google Engineering Practices: https://google.github.io/eng-practices/
+- Google Engineering Practices: https://google.github.io/eng-practices/review/
 - Termux project: https://github.com/termux/termux-app
 
 These references guide engineering decisions; they do not transfer copyright or asset licenses to this repository.
