@@ -2,8 +2,8 @@ extends Node
 
 signal changed
 
-const PATH := "user://settings.cfg"
-const DEFAULTS := {
+const PATH: String = "user://settings.cfg"
+const DEFAULTS: Dictionary[String, Variant] = {
 	"audio/master_db": 0.0,
 	"audio/music_db": -6.0,
 	"audio/sfx_db": -3.0,
@@ -17,38 +17,38 @@ const DEFAULTS := {
 	"accessibility/high_contrast": false
 }
 
-var values: Dictionary = DEFAULTS.duplicate(true)
+var values: Dictionary[String, Variant] = DEFAULTS.duplicate(true)
 
 func _ready() -> void:
 	load_settings()
 
 func load_settings() -> void:
-	var cfg := ConfigFile.new()
+	var cfg: ConfigFile = ConfigFile.new()
 	if cfg.load(PATH) != OK:
 		values = DEFAULTS.duplicate(true)
 		return
-	for key in DEFAULTS:
-		var parts := String(key).split("/", false, 1)
+	for key: String in DEFAULTS:
+		var parts: PackedStringArray = key.split("/", false, 1)
 		values[key] = cfg.get_value(parts[0], parts[1], DEFAULTS[key])
 
-func set_value(key: String, value) -> void:
+func set_value(key: String, value: Variant) -> void:
 	if not DEFAULTS.has(key):
 		return
 	values[key] = value
-	save_settings()
-	changed.emit()
+	if save_settings() == OK:
+		changed.emit()
 
-func get_value(key: String):
+func get_value(key: String) -> Variant:
 	return values.get(key, DEFAULTS.get(key))
 
 func save_settings() -> Error:
-	var cfg := ConfigFile.new()
-	for key in values:
-		var parts := String(key).split("/", false, 1)
+	var cfg: ConfigFile = ConfigFile.new()
+	for key: String in values:
+		var parts: PackedStringArray = key.split("/", false, 1)
 		cfg.set_value(parts[0], parts[1], values[key])
 	return cfg.save(PATH)
 
 func reset() -> void:
 	values = DEFAULTS.duplicate(true)
-	save_settings()
-	changed.emit()
+	if save_settings() == OK:
+		changed.emit()
