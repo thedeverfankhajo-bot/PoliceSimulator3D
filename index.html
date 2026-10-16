@@ -215,7 +215,7 @@ function interact(){
  else if(!player.inVehicle&&distance(player,{x:player.x,z:player.z})>=0&&Math.hypot(player.x- playerCarPosition().x,player.z-playerCarPosition().z)<4.5){showToast('خودروی گشتی','کلید F را بزن تا سوار خودروی گشتی شوی.');}
  else {showToast('تعامل','برای بررسی راننده، خودروی مظنون باید متوقف باشد و به آن نزدیک شوی.');}
 }
-function playerCarPosition(){return {x:player.x,z:player.z};}
+function playerCarPosition(){return {x:playerCarX,z:playerCarZ};}
 function toggleVehicle(){
  if(player.inVehicle){
   if(Math.abs(player.speed)>2.1){showToast('خطر پیاده‌شدن','ابتدا خودرو را تقریباً متوقف کن.');return;}
