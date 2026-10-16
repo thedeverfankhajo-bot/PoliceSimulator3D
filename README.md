@@ -1,45 +1,45 @@
 # PoliceSimulator3D
 
-A native Android police-patrol simulator prototype inspired by the open-world patrol loop of LSPDFR. This project is built **without a game engine**: Kotlin, the Android SDK, and a custom OpenGL ES 2.0 renderer.
+Native Android police-patrol simulator inspired by the open-world patrol loop of LSPDFR. The project is built **without a game engine** using Kotlin, the Android SDK, and a custom OpenGL ES 2.0 renderer.
 
-## Current direction
+## Current Android implementation
 
-- Native Android app written in Kotlin.
-- Custom 3D rendering through Android's `GLSurfaceView` / `GLSurfaceView.Renderer` APIs.
-- Procedurally generated low-poly city blocks; no Unity, Unreal, Godot, or external 3D asset pack.
-- Third-person police cruiser driving and touch controls designed for landscape phones.
-- Dispatch callouts, a simple progression/score loop, traffic vehicles, emergency lightbar, and synthesized siren audio.
-- Offline-first; no account, network, or analytics requirement.
+- Native Android app entry point: `app/src/main/java/com/erfan/policesimulator/MainActivity.kt`
+- Custom 3D scene and gameplay loop: `GameEngine.kt`
+- OpenGL ES 2.0 via Android `GLSurfaceView` and `GLSurfaceView.Renderer`
+- Procedurally generated low-poly city blocks, roads, windows, streetlights, traffic and patrol/suspect vehicles
+- Third-person patrol driving with touch controls for steering, acceleration and braking
+- Emergency lightbar toggle, dispatch callouts, suspect stop, on-foot field contact, warrant check and score progression
+- Landscape full-screen layout; offline-first, no analytics or account requirement
 
-## Build
+This is an early playable foundation, not feature parity with LSPDFR or a commercial open-world game. The current world uses procedural low-poly geometry rather than external game assets. Vehicle collision physics, realistic pedestrian AI, pursuit behavior, persistent save data, audio, map navigation and a full arrest/citation decision UI remain future work.
 
-Open the project folder in a recent Android Studio installation with JDK 17, Android SDK Platform 36, and Gradle 8.13 available. Or run the included CI build workflow.
+## Build the Android app
+
+Requirements: JDK 17, Android SDK Platform 35, and Gradle 8.13.
 
 ```bash
-gradle :app:assembleDebug
-gradle :app:testDebugUnitTest
+gradle --no-daemon :app:testDebugUnitTest :app:assembleDebug
 ```
 
-The Android Gradle Plugin is pinned to 8.13.2 and Kotlin to 2.2.21 to keep builds reproducible. The app targets Android API 35 and supports API 26+.
+The debug APK is produced at `app/build/outputs/apk/debug/app-debug.apk`. GitHub Actions builds and tests the app on pushes and pull requests targeting `main`, and uploads the debug APK as a workflow artifact.
 
 ## Controls
 
-- **STEER ◀ / ▶** — steer the patrol car.
-- **ACCEL** — accelerate while held.
-- **BRAKE** — brake while held.
-- **SIREN** — toggle the lightbar and synthesized siren.
-- **INTERACT** — resolve a callout when close enough (some callouts require the vehicle to be stopped).
-- **NEW CALL** — request another dispatch assignment.
-
-## Scope and roadmap
-
-This is an early playable foundation, not a claim of feature parity with a full commercial open-world game. Planned systems include richer traffic behavior, on-foot officer controls, vehicle stops, citation/arrest interactions, pursuits, better 3D assets, settings, and saved progress.
+- **◀ / ▶** — steer while held
+- **ACCEL / BRAKE** — drive while held
+- **LIGHTS / SIREN** — toggle emergency lights and siren state
+- **EXIT / ENTER** — leave or enter the patrol car (stop first)
+- **INTERACT** — progress the field contact when in range
+- **NEW CALL** — accept a call when available or after a call is complete
 
 ## Technical references
 
 - [Android OpenGL ES overview](https://developer.android.com/develop/ui/views/graphics/opengl/about-opengl)
+- [Build an OpenGL ES environment](https://developer.android.com/develop/ui/views/graphics/opengl/environment)
 - [Displaying graphics with OpenGL ES](https://developer.android.com/develop/ui/views/graphics/opengl)
 - [Android Gradle Plugin release notes](https://developer.android.com/build/releases/gradle-plugin)
+- [GitHub Actions: build and test Java with Gradle](https://docs.github.com/actions/tutorials/build-and-test-code/java-with-gradle)
 
 ## License
 
