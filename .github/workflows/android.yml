@@ -42,8 +42,8 @@ jobs:
         with:
           gradle-version: '8.13'
 
-      - name: Run unit tests and build debug APK
-        run: gradle --no-daemon :app:testDebugUnitTest :app:assembleDebug
+      - name: Run unit tests, Android Lint and build debug APK
+        run: gradle --no-daemon :app:testDebugUnitTest :app:lintDebug :app:assembleDebug
 
       - name: Upload debug APK
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2

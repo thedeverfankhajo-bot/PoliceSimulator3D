@@ -22,14 +22,20 @@ class MainActivity : Activity() {
     private lateinit var sirenButton: Button
     private lateinit var vehicleButton: Button
     private lateinit var callButton: Button
+    private lateinit var interactionButton: Button
+    private lateinit var glView: GLSurfaceView
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         window.decorView.systemUiVisibility = (View.SYSTEM_UI_FLAG_FULLSCREEN or View.SYSTEM_UI_FLAG_HIDE_NAVIGATION or View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY or View.SYSTEM_UI_FLAG_LAYOUT_STABLE or View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN)
         game = GameEngine(this)
-        val gl = GLSurfaceView(this).apply { setEGLContextClientVersion(2); setRenderer(game); renderMode = GLSurfaceView.RENDERMODE_CONTINUOUSLY }
+        glView = GLSurfaceView(this).apply {
+            setEGLContextClientVersion(2)
+            setRenderer(game)
+            renderMode = GLSurfaceView.RENDERMODE_CONTINUOUSLY
+        }
         val root = FrameLayout(this)
-        root.addView(gl, FrameLayout.LayoutParams(-1, -1))
+        root.addView(glView, FrameLayout.LayoutParams(-1, -1))
         val top = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL; setPadding(12, 10, 12, 8) }
         val info = panel()
         info.addView(label("POLICE SIMULATOR 3D • UNIT 12", 15f, true))
@@ -52,10 +58,17 @@ class MainActivity : Activity() {
         drive.addView(accel, weight()); drive.addView(brake, weight()); controls.addView(drive, LinearLayout.LayoutParams(0, -2, 1.3f))
         val actions = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
         sirenButton = button("LIGHTS / SIREN") { game.toggleSiren() }
-        vehicleButton = button("EXIT VEHICLE") { game.toggleVehicle() }
-        val interact = button("INTERACT") { game.interact() }
+        vehicleButton = button("EXIT VEHICLE") {
+            if (game.snapshot().decisionRequired) game.chooseCitation() else game.toggleVehicle()
+        }
+        interactionButton = button("INTERACT") {
+            if (game.snapshot().decisionRequired) game.chooseArrest() else game.interact()
+        }
         callButton = button("NEW CALL") { game.requestCall() }
-        actions.addView(sirenButton, weight()); actions.addView(vehicleButton, weight()); actions.addView(interact, weight()); actions.addView(callButton, weight())
+        actions.addView(sirenButton, weight())
+        actions.addView(vehicleButton, weight())
+        actions.addView(interactionButton, weight())
+        actions.addView(callButton, weight())
         controls.addView(actions, LinearLayout.LayoutParams(0, -2, 2.3f))
         root.addView(controls, FrameLayout.LayoutParams(-1, -2, Gravity.BOTTOM))
         game.setListener { s, msg -> runOnUiThread {
@@ -64,10 +77,25 @@ class MainActivity : Activity() {
             objective.text = s.objective
             radio.text = if (msg.isNotBlank()) msg else s.radio
             sirenButton.text = if (s.lights && s.siren) "LIGHTS: ON" else "LIGHTS / SIREN"
-            vehicleButton.text = if (s.onFoot) "ENTER VEHICLE" else "EXIT VEHICLE"
+            vehicleButton.text = when {
+                s.decisionRequired -> "CITE / WARN"
+                s.onFoot -> "ENTER VEHICLE"
+                else -> "EXIT VEHICLE"
+            }
+            interactionButton.text = if (s.decisionRequired) "ARREST" else "INTERACT"
             callButton.text = if (s.score > 0) "NEW CALL • " + s.score + " XP" else "NEW CALL"
         } }
         setContentView(root)
+    }
+
+    override fun onResume() {
+        super.onResume()
+        if (::glView.isInitialized) glView.onResume()
+    }
+
+    override fun onPause() {
+        if (::glView.isInitialized) glView.onPause()
+        super.onPause()
     }
 
     private fun panel() = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setPadding(10, 8, 10, 8); setBackgroundColor(Color.argb(215, 8, 20, 31)) }

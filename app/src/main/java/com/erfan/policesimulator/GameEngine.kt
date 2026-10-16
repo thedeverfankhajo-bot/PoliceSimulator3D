@@ -17,7 +17,7 @@ import kotlin.math.min
 import kotlin.math.sin
 import kotlin.math.sqrt
 
-data class GameSnapshot(val speed: Int, val lights: Boolean, val siren: Boolean, val onFoot: Boolean, val mission: String, val objective: String, val distance: Int, val score: Int, val radio: String)
+data class GameSnapshot(val speed: Int, val lights: Boolean, val siren: Boolean, val onFoot: Boolean, val mission: String, val objective: String, val distance: Int, val score: Int, val radio: String, val decisionRequired: Boolean)
 
 class GameEngine(context: Context) : GLSurfaceView.Renderer {
     @Volatile private var gas=false
@@ -27,6 +27,7 @@ class GameEngine(context: Context) : GLSurfaceView.Renderer {
     @Volatile private var nextCall=false
     @Volatile private var vehicleToggle=false
     @Volatile private var sirenToggle=false
+    @Volatile private var arrestDecision=0
     @Volatile private var x=0f
     @Volatile private var z=12f
     @Volatile private var angle=0f
@@ -74,7 +75,9 @@ class GameEngine(context: Context) : GLSurfaceView.Renderer {
     fun requestCall(){nextCall=true}
     fun toggleVehicle(){vehicleToggle=true}
     fun toggleSiren(){sirenToggle=true}
-    fun snapshot()=GameSnapshot((abs(speed)*3.6f).toInt(),lights,siren,onFoot,missionName(),objective,distance(x,z,suspectX,suspectZ).toInt(),score,radio)
+    fun chooseArrest(){arrestDecision=1}
+    fun chooseCitation(){arrestDecision=-1}
+    fun snapshot()=GameSnapshot((abs(speed)*3.6f).toInt(),lights,siren,onFoot,missionName(),objective,distance(x,z,suspectX,suspectZ).toInt(),score,radio,stage==4)
 
     override fun onSurfaceCreated(gl:GL10?,config:EGLConfig?){
         GLES20.glClearColor(0.43f,0.66f,0.79f,1f);GLES20.glEnable(GLES20.GL_DEPTH_TEST)
@@ -114,6 +117,11 @@ class GameEngine(context: Context) : GLSurfaceView.Renderer {
                 radio="Dispatch: suspicious vehicle assigned to Unit 12.";announce("Call accepted. Locate the suspect.",now)}
             else announce("Complete the current call first.",now)
         }
+        if(arrestDecision!=0){
+            val selected=arrestDecision
+            arrestDecision=0
+            handleDecision(selected==1,now)
+        }
         if(!onFoot){if(gas)speed+=12f*dt else if(brake)speed-=19f*dt else speed*=max(0f,1f-0.8f*dt)
             speed=speed.coerceIn(-6f,30f);angle+=steering*dt*(0.3f+min(abs(speed)/12f,1f))*if(speed>=0f)1f else -1f
             x+=-sin(angle)*speed*dt;z+=-cos(angle)*speed*dt;x=x.coerceIn(-155f,155f);z=z.coerceIn(-155f,155f);patrolX=x;patrolZ=z
@@ -127,10 +135,27 @@ class GameEngine(context: Context) : GLSurfaceView.Renderer {
         0->announce("Accept a dispatch call first.",now)
         1->announce("Activate lights and siren and approach the suspect.",now)
         2->if(onFoot&&distance(x,z,suspectX,suspectZ)<6f){stage=3;objective="Interact again to request licence and warrant records.";radio="Dispatch: field contact started.";announce("Driver contact started.",now)}else announce("Exit the vehicle and move closer.",now)
-        3->{stage=4;objective=if(warrant)"Active warrant confirmed. Interact to arrest the driver." else "No active warrant. Interact to issue a citation or warning.";radio=if(warrant)"Dispatch: active warrant confirmed." else "Dispatch: no active warrant.";announce(if(warrant)"Warrant confirmed." else "No active warrant found.",now)}
-        4->{score+=if(warrant)250 else 120;stage=5;lights=false;siren=false;objective="Call complete. Request another dispatch assignment.";radio="Dispatch: incident cleared. Unit 12 available.";announce("Call complete. XP awarded.",now)}
+        3->if(onFoot&&distance(x,z,suspectX,suspectZ)<8f){
+            stage=4
+            objective=if(warrant)"Active warrant confirmed. Choose ARREST or CITE / WARN." else "No active warrant. Choose CITE / WARN; do not arrest without legal grounds."
+            radio=if(warrant)"Dispatch: active warrant confirmed." else "Dispatch: no active warrant."
+            announce(if(warrant)"Records returned an active warrant." else "Records returned no active warrant.",now)
+        }else announce("Stay near the driver to request records.",now)
+        4->announce("Choose ARREST or CITE / WARN using the action buttons.",now)
         else->announce("Request the next call.",now)
     }}
+    private fun handleDecision(arrest:Boolean,now:Long){
+        if(stage!=4){announce("Check the driver's records before choosing an outcome.",now);return}
+        val action=if(arrest) IncidentAction.ARREST else IncidentAction.CITE_OR_WARN
+        val outcome=IncidentRules.resolve(warrant,action)
+        score=(score+outcome.scoreDelta).coerceAtLeast(0)
+        stage=5
+        lights=false
+        siren=false
+        objective="Call complete. Request another dispatch assignment."
+        radio=outcome.dispatchMessage
+        announce(outcome.message,now)
+    }
     private fun missionName()=when(stage){0->"Dispatch available";1->"En route: vehicle stop";2->"Suspect stopped";3->"Field contact";4->"Records checked";else->"Call complete"}
     private fun announce(text:String,now:Long){message=text;messageUntil=now+2800L}
     private fun distance(ax:Float,az:Float,bx:Float,bz:Float):Float{val dx=ax-bx;val dz=az-bz;return kotlin.math.sqrt(dx*dx+dz*dz)}
