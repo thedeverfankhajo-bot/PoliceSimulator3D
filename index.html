@@ -1,0 +1,373 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="theme-color" content="#101b27">
+<title>Police Simulator 3D — Patrol Unit</title>
+<style>
+:root{color-scheme:dark;--glass:rgba(10,20,31,.83);--line:rgba(180,210,232,.18);--blue:#59c6ff;--muted:#9bb0c1;--green:#72e5b0;--amber:#ffcf70;--red:#ff6d76}
+*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#172430;font-family:system-ui,-apple-system,"Segoe UI",sans-serif;color:#eef7ff;touch-action:manipulation}
+#game{position:fixed;inset:0;width:100%;height:100%;display:block;outline:none}
+#vignette{position:fixed;inset:0;pointer-events:none;background:linear-gradient(180deg,rgba(4,13,22,.56),transparent 18%,transparent 68%,rgba(4,13,22,.5));}
+.hud{position:fixed;inset:0;pointer-events:none}.panel{pointer-events:auto;background:var(--glass);border:1px solid var(--line);border-radius:14px;box-shadow:0 8px 28px rgba(0,0,0,.24);backdrop-filter:blur(10px)}
+.topbar{position:absolute;left:16px;right:16px;top:14px;display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
+.brand{padding:10px 14px;min-width:220px}.brandline{display:flex;align-items:center;gap:9px;font-weight:800;letter-spacing:.2px}.badge{font-size:10px;letter-spacing:1.1px;border:1px solid #4fc7ff77;color:#87dcff;border-radius:6px;padding:3px 6px}.subtitle{font-size:11px;color:var(--muted);margin-top:4px}
+.statusrow{display:flex;gap:7px;flex-wrap:wrap;justify-content:center}.status{padding:8px 11px;font-size:12px;white-space:nowrap}.led{display:inline-block;width:7px;height:7px;border-radius:100%;background:#78909c;margin-left:6px}.led.on{background:var(--green);box-shadow:0 0 9px #72e5b0a0}.led.warn{background:var(--amber);box-shadow:0 0 9px #ffcf7066}
+.telemetry{min-width:142px;padding:8px 12px;text-align:center;direction:ltr}.speed{font-size:31px;font-weight:800;line-height:1.05;font-variant-numeric:tabular-nums}.speed small{font-size:11px;font-weight:600;color:var(--muted);margin-left:4px}.gear{font-size:11px;color:var(--muted);margin-top:3px}
+.sidepanel{position:absolute;top:102px;right:16px;width:280px;padding:14px}.sectiontitle{display:flex;align-items:center;justify-content:space-between;font-weight:800;font-size:13px;margin-bottom:11px}.sectiontitle .tag{font-size:10px;color:#9be1ff;border:1px solid #65cfff55;border-radius:5px;padding:3px 6px}.calltitle{font-size:17px;font-weight:800;margin-bottom:5px}.muted{color:var(--muted);font-size:12px;line-height:1.65}.divider{height:1px;background:var(--line);margin:12px 0}.objective{background:rgba(63,152,195,.12);border:1px solid rgba(95,195,239,.18);border-radius:10px;padding:10px;margin-top:10px}.objective strong{display:block;font-size:12px;margin-bottom:4px}.objective p{font-size:12px;line-height:1.7;color:#c7d9e8;margin:0}.button{border:1px solid #62c9ff55;border-radius:9px;padding:10px 12px;background:linear-gradient(135deg,#1c6385,#16435d);color:#fff;font-weight:750;font-size:12px;cursor:pointer;width:100%;margin-top:9px}.button:hover{filter:brightness(1.15)}.button:active{transform:translateY(1px)}.button.secondary{background:rgba(132,157,177,.14);border-color:var(--line)}.button.good{background:linear-gradient(135deg,#18785e,#13503f);border-color:#6de8b455}.button.danger{background:linear-gradient(135deg,#9a3a42,#64242c);border-color:#ff8c9355}.button:disabled{opacity:.45;cursor:not-allowed}
+.leftpanel{position:absolute;top:102px;left:16px;width:210px;padding:12px}.statline{display:flex;justify-content:space-between;gap:8px;font-size:12px;margin:8px 0}.statline span:first-child{color:var(--muted)}.statline strong{font-variant-numeric:tabular-nums}
+.controlsHint{position:absolute;bottom:16px;left:16px;padding:10px 13px;max-width:365px;font-size:11px;color:#c6d5e2;line-height:1.7}.key{display:inline-block;min-width:22px;padding:1px 5px;text-align:center;border:1px solid #9bb3c733;border-bottom-width:2px;border-radius:5px;color:#edf8ff;background:#1a2a38;font-size:10px;margin:0 2px}
+.centerMessage{position:absolute;left:50%;top:21%;transform:translateX(-50%);text-align:center;width:min(520px,calc(100% - 30px));padding:12px 16px;transition:opacity .2s;opacity:0}.centerMessage.show{opacity:1}.centerMessage strong{font-size:14px}.centerMessage div{font-size:12px;color:#c8d8e5;margin-top:4px}
+.contact{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:min(385px,calc(100% - 28px));padding:17px}.contact h3{margin:0 0 6px;font-size:17px}.contact .actions{display:grid;grid-template-columns:1fr 1fr;gap:7px}.contact .actions .button{margin:0}.contact[hidden]{display:none}
+.footer{position:absolute;bottom:17px;right:16px;padding:8px 10px;color:#b9cbd8;font-size:10px}.dot{color:#6ad4ff;margin:0 5px}
+.touchcontrols{display:none;position:absolute;left:14px;right:14px;bottom:14px;align-items:flex-end;justify-content:space-between;pointer-events:none;direction:ltr}.touchgroup{display:grid;gap:8px;pointer-events:auto}.touchgroup.steer{grid-template-columns:repeat(2,54px)}.touchgroup.drive{grid-template-columns:repeat(2,60px)}.touchgroup.tools{grid-template-columns:repeat(2,55px)}.touchbtn{height:48px;min-width:48px;border:1px solid #d4e9ff55;background:rgba(9,20,32,.75);color:white;border-radius:13px;font-size:16px;font-weight:800;box-shadow:0 3px 12px #0004;touch-action:none;user-select:none}.touchbtn:active,.touchbtn.pressed{background:#1b6387}.touchbtn.small{font-size:11px;min-width:52px}
+#webglError{display:none;position:fixed;inset:15%;z-index:9;padding:25px;background:#101b27;border:1px solid #ff6d76;border-radius:14px;text-align:center}
+@media(max-width:800px){.topbar{top:8px;left:8px;right:8px;gap:6px;align-items:flex-start}.brand{min-width:0;padding:8px 10px}.brandline{font-size:12px}.subtitle{font-size:9px}.statusrow{display:none}.telemetry{min-width:100px;padding:7px 9px}.speed{font-size:25px}.sidepanel{top:72px;right:8px;width:218px;padding:11px}.leftpanel{top:auto;bottom:178px;left:8px;width:150px;padding:9px}.sidepanel .muted{font-size:11px}.calltitle{font-size:15px}.footer{display:none}.controlsHint{display:none}.touchcontrols{display:flex}.contact{z-index:3}.centerMessage{top:18%}.panel{backdrop-filter:blur(6px)}}
+@media(max-width:430px){.sidepanel{width:200px;max-height:45vh;overflow:auto}.leftpanel{bottom:170px;width:135px}.statline{font-size:11px}.brandline{font-size:11px}.badge{font-size:8px}.touchgroup.steer{grid-template-columns:repeat(2,47px)}.touchgroup.drive{grid-template-columns:repeat(2,51px)}.touchgroup.tools{grid-template-columns:repeat(2,48px)}.touchbtn{height:44px;min-width:44px;border-radius:12px}.touchbtn.small{min-width:45px;font-size:10px}}
+</style>
+</head>
+<body>
+<canvas id="game" aria-label="Police Simulator 3D game world"></canvas><div id="vignette"></div>
+<div id="webglError"><h2>مرورگر از WebGL پشتیبانی نمی‌کند</h2><p>بازی را با نسخه جدید Chrome یا Firefox باز کن و شتاب‌دهی سخت‌افزاری را فعال کن.</p></div>
+<div class="hud">
+ <div class="topbar">
+  <div class="panel brand"><div class="brandline"><span>🚔</span><span>POLICE SIMULATOR 3D</span><span class="badge">PATROL UNIT</span></div><div class="subtitle">شبیه‌ساز گشت شهری • نسخه آزمایشی 0.1</div></div>
+  <div class="statusrow">
+   <div class="panel status"><span id="lightLed" class="led"></span>چراغ گردان <strong id="lightText">خاموش</strong></div>
+   <div class="panel status"><span id="sirenLed" class="led"></span>آژیر <strong id="sirenText">خاموش</strong></div>
+   <div class="panel status">وضعیت: <strong id="modeText">خودرو</strong></div>
+  </div>
+  <div class="panel telemetry"><div class="speed"><span id="speedValue">0</span><small>KM/H</small></div><div class="gear" id="gearValue">D · گشت فعال</div></div>
+ </div>
+ <aside class="panel sidepanel">
+  <div class="sectiontitle"><span>مرکز اعزام و مأموریت</span><span class="tag" id="callTag">RADIO 01</span></div>
+  <div class="calltitle" id="missionTitle">تماس ورودی: خودروی مشکوک</div>
+  <div class="muted" id="missionDescription">مرکز کنترل گزارش پلاک مشکوک در خیابان اصلی را اعلام کرده است. نزدیک شو و خودرو را با چراغ گردان متوقف کن.</div>
+  <div class="objective"><strong>هدف فعلی</strong><p id="objectiveText">تماس را بپذیر، چراغ گردان و آژیر را روشن کن و به خودروی مشخص‌شده نزدیک شو.</p></div>
+  <div class="statline"><span>فاصله تا خودرو</span><strong id="distanceValue">—</strong></div>
+  <div class="statline"><span>امتیاز گشت</span><strong id="scoreValue">0 XP</strong></div>
+  <button class="button" id="acceptButton">پذیرش تماس  [ ENTER ]</button>
+  <button class="button secondary" id="nextButton" hidden>دریافت مأموریت بعدی</button>
+ </aside>
+ <aside class="panel leftpanel">
+  <div class="sectiontitle"><span>اطلاعات گشت</span><span class="tag">UNIT 12</span></div>
+  <div class="statline"><span>منطقه</span><strong>مرکز شهر</strong></div>
+  <div class="statline"><span>وضعیت خودرو</span><strong id="vehicleStatus">آماده</strong></div>
+  <div class="statline"><span>چراغ‌ها</span><strong id="lightStatus">خاموش</strong></div>
+  <div class="statline"><span>آژیر</span><strong id="sirenStatus">خاموش</strong></div>
+  <div class="divider"></div>
+  <div class="muted" id="radioMessage">رادیو: واحد ۱۲ آماده گشت است.</div>
+ </aside>
+ <div class="panel centerMessage" id="toast"><strong id="toastTitle">پیام مرکز</strong><div id="toastBody"></div></div>
+ <section class="panel contact" id="contactPanel" hidden>
+  <div class="sectiontitle"><span>توقف کنار جاده</span><span class="tag">FIELD CONTACT</span></div>
+  <h3 id="contactTitle">بررسی راننده</h3><div class="muted" id="contactDescription">از راننده مدارک شناسایی و گواهینامه درخواست کن.</div>
+  <div class="divider"></div>
+  <div class="objective" id="recordsBox" hidden><strong>نتیجه استعلام</strong><p id="recordsText"></p></div>
+  <div class="actions" id="contactActions">
+   <button class="button" id="checkButton">بررسی مدارک</button>
+   <button class="button secondary" id="closeContactButton">بستن پنجره</button>
+  </div>
+  <div class="actions" id="decisionActions" hidden style="margin-top:8px">
+   <button class="button danger" id="arrestButton">بازداشت راننده</button>
+   <button class="button good" id="citeButton">صدور جریمه / اخطار</button>
+  </div>
+ </section>
+ <div class="panel controlsHint">
+  <div><span class="key">W</span><span class="key">S</span> گاز / ترمز <span class="dot">•</span><span class="key">A</span><span class="key">D</span> فرمان</div>
+  <div><span class="key">L</span> چراغ گردان <span class="dot">•</span><span class="key">J</span> آژیر <span class="dot">•</span><span class="key">F</span> پیاده‌شدن / سوارشدن</div>
+  <div><span class="key">E</span> تعامل <span class="dot">•</span><span class="key">ENTER</span> پذیرش تماس <span class="dot">•</span><span class="key">R</span> بازگشت به جاده</div>
+ </div>
+ <div class="panel footer">RAW WEBGL <span class="dot">•</span> بدون موتور بازی <span class="dot">•</span> یک شهر آزمایشی قابل گسترش</div>
+ <div class="touchcontrols">
+  <div class="touchgroup steer"><button class="touchbtn" id="leftTouch" aria-label="فرمان چپ">◀</button><button class="touchbtn" id="rightTouch" aria-label="فرمان راست">▶</button></div>
+  <div class="touchgroup tools"><button class="touchbtn small" id="sirenTouch">آژیر</button><button class="touchbtn small" id="interactTouch">تعامل</button></div>
+  <div class="touchgroup drive"><button class="touchbtn" id="gasTouch">▲</button><button class="touchbtn" id="brakeTouch">▼</button><button class="touchbtn small" id="exitTouch">پیاده</button><button class="touchbtn small" id="lightsTouch">چراغ</button></div>
+ </div>
+</div>
+<script>
+(function(){
+'use strict';
+const canvas=document.getElementById('game');
+const gl=canvas.getContext('webgl',{antialias:true,alpha:false,powerPreference:'high-performance'});
+if(!gl){document.getElementById('webglError').style.display='block';return;}
+const vertexShaderSource='attribute vec3 aPosition; attribute vec3 aNormal; attribute vec3 aColor; uniform mat4 uViewProjection; varying vec3 vNormal; varying vec3 vColor; void main(){gl_Position=uViewProjection*vec4(aPosition,1.0);vNormal=aNormal;vColor=aColor;}';
+const fragmentShaderSource='precision mediump float; varying vec3 vNormal; varying vec3 vColor; void main(){vec3 n=normalize(vNormal);vec3 sun=normalize(vec3(-0.45,0.82,0.36));float d=max(dot(n,sun),0.0);float shade=0.43+0.57*d;gl_FragColor=vec4(vColor*shade,1.0);}';
+function compileShader(type,source){const s=gl.createShader(type);gl.shaderSource(s,source);gl.compileShader(s);if(!gl.getShaderParameter(s,gl.COMPILE_STATUS)){console.error(gl.getShaderInfoLog(s));return null;}return s;}
+const vs=compileShader(gl.VERTEX_SHADER,vertexShaderSource),fs=compileShader(gl.FRAGMENT_SHADER,fragmentShaderSource);
+if(!vs||!fs){document.getElementById('webglError').style.display='block';return;}
+const program=gl.createProgram();gl.attachShader(program,vs);gl.attachShader(program,fs);gl.linkProgram(program);
+if(!gl.getProgramParameter(program,gl.LINK_STATUS)){console.error(gl.getProgramInfoLog(program));document.getElementById('webglError').style.display='block';return;}
+gl.useProgram(program);
+const loc={position:gl.getAttribLocation(program,'aPosition'),normal:gl.getAttribLocation(program,'aNormal'),color:gl.getAttribLocation(program,'aColor'),vp:gl.getUniformLocation(program,'uViewProjection')};
+gl.enable(gl.DEPTH_TEST);gl.depthFunc(gl.LEQUAL);gl.clearColor(.39,.64,.79,1);
+const cube=[];
+function face(a,b,c,d,n){const pts=[a,b,c,a,c,d];for(let i=0;i<pts.length;i++)cube.push({p:pts[i],n:n});}
+face([-0.5,-0.5,-0.5],[0.5,-0.5,-0.5],[0.5,0.5,-0.5],[-0.5,0.5,-0.5],[0,0,-1]);
+face([0.5,-0.5,0.5],[-0.5,-0.5,0.5],[-0.5,0.5,0.5],[0.5,0.5,0.5],[0,0,1]);
+face([-0.5,-0.5,0.5],[-0.5,-0.5,-0.5],[-0.5,0.5,-0.5],[-0.5,0.5,0.5],[-1,0,0]);
+face([0.5,-0.5,-0.5],[0.5,-0.5,0.5],[0.5,0.5,0.5],[0.5,0.5,-0.5],[1,0,0]);
+face([-0.5,0.5,-0.5],[0.5,0.5,-0.5],[0.5,0.5,0.5],[-0.5,0.5,0.5],[0,1,0]);
+face([-0.5,-0.5,0.5],[0.5,-0.5,0.5],[0.5,-0.5,-0.5],[-0.5,-0.5,-0.5],[0,-1,0]);
+const staticBuffer=gl.createBuffer(),dynamicBuffer=gl.createBuffer();
+const colorCache={};
+function color(hex){if(colorCache[hex])return colorCache[hex];const s=hex.replace('#','');const c=[parseInt(s.slice(0,2),16)/255,parseInt(s.slice(2,4),16)/255,parseInt(s.slice(4,6),16)/255];colorCache[hex]=c;return c;}
+function addCube(out,x,y,z,sx,sy,sz,yaw,hex){
+ const col=Array.isArray(hex)?hex:color(hex),co=Math.cos(yaw||0),si=Math.sin(yaw||0);
+ for(let i=0;i<cube.length;i++){
+  const v=cube[i],p=v.p,n=v.n,lx=p[0]*sx,lz=p[2]*sz;
+  out.push(x+lx*co+lz*si,y+p[1]*sy,z-lx*si+lz*co);
+  out.push(n[0]*co+n[2]*si,n[1],-n[0]*si+n[2]*co);
+  out.push(col[0],col[1],col[2]);
+ }
+}
+function uploadMesh(buffer,data,usage){gl.bindBuffer(gl.ARRAY_BUFFER,buffer);gl.bufferData(gl.ARRAY_BUFFER,new Float32Array(data),usage);}
+function bindMesh(buffer){gl.bindBuffer(gl.ARRAY_BUFFER,buffer);const stride=9*4;gl.enableVertexAttribArray(loc.position);gl.vertexAttribPointer(loc.position,3,gl.FLOAT,false,stride,0);gl.enableVertexAttribArray(loc.normal);gl.vertexAttribPointer(loc.normal,3,gl.FLOAT,false,stride,3*4);gl.enableVertexAttribArray(loc.color);gl.vertexAttribPointer(loc.color,3,gl.FLOAT,false,stride,6*4);}
+const worldFloats=[],buildings=[];
+function rand(min,max){return min+Math.random()*(max-min);}
+function buildCity(){
+ addCube(worldFloats,0,-.26,0,420,.5,420,0,'#59645e');
+ const streets=[];for(let i=-3;i<=3;i++)streets.push(i*40);
+ for(const x of streets){addCube(worldFloats,x,.012,0,12,.08,340,0,'#333b42');addCube(worldFloats,x-6.45,.10,0,.9,.18,340,0,'#838b8c');addCube(worldFloats,x+6.45,.10,0,.9,.18,340,0,'#838b8c');}
+ for(const z of streets){addCube(worldFloats,0,.014,z,340,.08,12,0,'#333b42');addCube(worldFloats,0,.10,z-6.45,340,.18,.9,0,'#838b8c');addCube(worldFloats,0,.10,z+6.45,340,.18,.9,0,'#838b8c');}
+ for(const x of streets){
+  for(let z=-150;z<=150;z+=20){if(Math.abs((z%40))>5){addCube(worldFloats,x,.071,z,.15,.02,5,0,'#f0cd68');addCube(worldFloats,x-.27,.071,z,.12,.02,5,0,'#f0cd68');}
+   addCube(worldFloats,x-3.8,.068,z, .11,.016,5,0,'#d9e2e4');addCube(worldFloats,x+3.8,.068,z,.11,.016,5,0,'#d9e2e4');
+  }
+ }
+ for(const z of streets){
+  for(let x=-150;x<=150;x+=20){if(Math.abs((x%40))>5){addCube(worldFloats,x,.071,z,.15,.02,5,Math.PI/2,'#f0cd68');addCube(worldFloats,x,.071,z-.27,.12,.02,5,Math.PI/2,'#f0cd68');}
+   addCube(worldFloats,x,.068,z-3.8,5,.016,.11,0,'#d9e2e4');addCube(worldFloats,x,.068,z+3.8,5,.016,.11,0,'#d9e2e4');
+  }
+ }
+ const tones=['#626d79','#767f87','#737b71','#82786f','#5e6f7b','#817c73','#596875'];
+ let bi=0;
+ for(let gx=-100;gx<=100;gx+=40)for(let gz=-100;gz<=100;gz+=40){
+  const bx=gx+rand(-5,5),bz=gz+rand(-5,5),w=rand(10,17),d=rand(10,17),h=rand(8,27);
+  const rec={x:bx,z:bz,w:w,d:d,h:h};buildings.push(rec);
+  const shade=tones[bi%tones.length];bi++;
+  addCube(worldFloats,bx,h/2,bz,w,h,d,0,shade);
+  addCube(worldFloats,bx,h+.13,bz,w+.25,.26,d+.25,0,'#434e57');
+  const glass=['#a5ced4','#638e9d','#8eb6bf'][bi%3];
+  const rows=Math.min(6,Math.max(2,Math.floor(h/3.4)));
+  for(let row=0;row<rows;row++){
+   const wy=1.8+row*(h-3)/(rows-1);
+   for(let c=0;c<3;c++){
+    const wx=bx+(c-1)*w*.27;
+    addCube(worldFloats,wx,wy,bz-d/2-.025,w*.12,.82,.05,0,glass);
+    addCube(worldFloats,wx,wy,bz+d/2+.025,w*.12,.82,.05,Math.PI,glass);
+   }
+  }
+  for(let row=0;row<Math.min(rows,4);row++){
+   const wy=1.8+row*(h-3)/(rows-1);
+   for(const side of [-1,1])for(const c of [-.24,.24]){
+    addCube(worldFloats,bx+side*(w/2+.025),wy,bz+c*d,.05,.72,d*.1,0,glass);
+   }
+  }
+  addCube(worldFloats,bx,h+.42,bz,w*.55,.2,.45,0,'#3b4a54');
+ }
+ // Streetlights: simple poles and fixtures around selected intersections.
+ for(let x=-120;x<=120;x+=80)for(let z=-120;z<=120;z+=80){
+  addCube(worldFloats,x+8,2.2,z+8,.16,4.4,.16,0,'#48525b');
+  addCube(worldFloats,x+8,4.35,z+7.2,.22,.16,1.6,0,'#505c64');
+  addCube(worldFloats,x+8,4.22,z+6.8,.38,.12,.44,0,'#e4d9a2');
+ }
+}
+buildCity();uploadMesh(staticBuffer,worldFloats,gl.STATIC_DRAW);
+const player={x:2.8,z:10,yaw:0,speed:0,inVehicle:true,lights:false,siren:false};
+const traffic=[];
+function addTraffic(x,z,yaw,speed,axis,direction,paint){traffic.push({x:x,z:z,yaw:yaw,speed:speed,axis:axis,direction:direction,paint:paint});}
+for(let i=0;i<10;i++){
+ const axis=i%2===0?'z':'x',road=(Math.floor(rand(-2.9,3))*40),dir=Math.random()<.5?1:-1;
+ if(axis==='z')addTraffic(road+(Math.random()<.5?-2.5:2.5),rand(-145,145),dir<0?0:Math.PI,rand(5,10),axis,dir,['#d5d8d5','#a7b2bd','#7d949c','#baad94','#6f828a'][i%5]);
+ else addTraffic(rand(-145,145),road+(Math.random()<.5?-2.5:2.5),dir>0?-Math.PI/2:Math.PI/2,rand(5,10),axis,dir,['#d5d8d5','#a7b2bd','#7d949c','#baad94','#6f828a'][i%5]);
+}
+const mission={stage:'available',id:1,hasWarrant:true,suspect:{x:2.8,z:-58,yaw:0,speed:0,stopped:true}};
+let score=0,toastTimer=null,toastQueue='',lastHud=0,lastFrame=0;
+const $=id=>document.getElementById(id);
+function showToast(title,body,duration=2600){$('toastTitle').textContent=title;$('toastBody').textContent=body;$('toast').classList.add('show');if(toastTimer)clearTimeout(toastTimer);toastTimer=setTimeout(()=>$('toast').classList.remove('show'),duration);}
+function distance(a,b){return Math.hypot(a.x-b.x,a.z-b.z);}
+function forward(yaw){return {x:-Math.sin(yaw),z:-Math.cos(yaw)};}
+function acceptCall(){if(mission.stage!=='available')return;mission.stage='enroute';mission.suspect.stopped=false;mission.suspect.speed=6;mission.hasWarrant=Math.random()<.62;$('radioMessage').textContent='رادیو: تماس دریافت شد؛ واحد ۱۲ در مسیر است.';showToast('تماس پذیرفته شد','به خودرو نزدیک شو و با چراغ و آژیر آن را متوقف کن.');updateHud(true);}
+function nextMission(){mission.id++;mission.stage='available';mission.hasWarrant=Math.random()<.62;const roadX=Math.round(player.x/40)*40;mission.suspect={x:roadX+2.7,z:player.z-72,yaw:0,speed:0,stopped:true};$('contactPanel').hidden=true;$('radioMessage').textContent='رادیو: تماس جدید دریافت شد.';showToast('تماس جدید','یک خودروی دیگر برای بررسی شناسایی شده است.');updateHud(true);}
+$('acceptButton').addEventListener('click',acceptCall);$('nextButton').addEventListener('click',nextMission);
+$('checkButton').addEventListener('click',checkRecords);$('closeContactButton').addEventListener('click',()=>{$('contactPanel').hidden=true;});
+$('arrestButton').addEventListener('click',()=>resolveCase('arrest'));$('citeButton').addEventListener('click',()=>resolveCase('cite'));
+function checkRecords(){
+ if(mission.stage!=='contact')return;
+ mission.stage='checked';$('recordsBox').hidden=false;$('decisionActions').hidden=false;$('checkButton').hidden=true;
+ if(mission.hasWarrant){$('recordsText').textContent='استعلام مرکز: گواهینامه تعلیق‌شده است و حکم جلب فعال برای راننده ثبت شده است.';$('contactDescription').textContent='با توجه به نتیجه استعلام، مطابق مقررات اقدام کن.';$('arrestButton').hidden=false;$('citeButton').textContent='ثبت تخلف و رهاسازی';}
+ else{$('recordsText').textContent='استعلام مرکز: گواهینامه معتبر است و حکم جلبی ثبت نشده. فقط تخلف رانندگی را بررسی کن.';$('contactDescription').textContent='راننده تحت تعقیب نیست؛ با توجه به شرایط، اخطار یا جریمه صادر کن.';$('arrestButton').hidden=false;$('citeButton').textContent='صدور جریمه / اخطار';}
+ showToast('نتیجه استعلام آماده است','بر اساس اطلاعات دریافتی تصمیم بگیر.');updateHud(true);
+}
+function resolveCase(choice){
+ if(mission.stage!=='checked')return;
+ if(choice==='arrest'&&mission.hasWarrant){score+=250;showToast('بازداشت قانونی','حکم جلب تأیید شد. راننده بازداشت و مأموریت تکمیل شد.');}
+ else if(choice==='cite'&&!mission.hasWarrant){score+=120;showToast('مأموریت موفق','مدارک معتبر بود؛ تخلف ثبت و راننده آزاد شد.');}
+ else if(choice==='cite'&&mission.hasWarrant){score=Math.max(0,score-60);showToast('تصمیم نادرست','راننده حکم جلب فعال داشت؛ امتیاز گشت کاهش یافت.');}
+ else{score=Math.max(0,score-120);showToast('بازداشت ناموجه','حکم جلبی وجود نداشت؛ امتیاز گشت کاهش یافت.');}
+ mission.stage='complete';$('contactPanel').hidden=true;$('radioMessage').textContent='رادیو: وضعیت مأموریت ثبت شد؛ واحد ۱۲ آماده تماس بعدی است.';updateHud(true);
+}
+function interact(){
+ if(!player.inVehicle&&mission.stage==='stopped'&&distance(player,mission.suspect)<4.7){mission.stage='contact';$('contactPanel').hidden=false;$('contactTitle').textContent='بررسی راننده • تماس '+String(mission.id).padStart(2,'0');$('contactDescription').textContent='از راننده مدارک درخواست کن و پیش از تصمیم نهایی استعلام بگیر.';$('recordsBox').hidden=true;$('decisionActions').hidden=true;$('checkButton').hidden=false;$('arrestButton').hidden=false;$('citeButton').hidden=false;$('citeButton').textContent='صدور جریمه / اخطار';showToast('تماس میدانی','راننده در حال انتظار است؛ مدارک را بررسی کن.');}
+ else if(player.inVehicle&&mission.stage==='stopped'&&distance(player,mission.suspect)<14){showToast('خودرو متوقف است','برای بررسی راننده با سرعت کم توقف کن و کلید F را بزن.');}
+ else if(!player.inVehicle&&distance(player,{x:player.x,z:player.z})>=0&&Math.hypot(player.x- playerCarPosition().x,player.z-playerCarPosition().z)<4.5){showToast('خودروی گشتی','کلید F را بزن تا سوار خودروی گشتی شوی.');}
+ else {showToast('تعامل','برای بررسی راننده، خودروی مظنون باید متوقف باشد و به آن نزدیک شوی.');}
+}
+function playerCarPosition(){return {x:player.x,z:player.z};}
+function toggleVehicle(){
+ if(player.inVehicle){
+  if(Math.abs(player.speed)>2.1){showToast('خطر پیاده‌شدن','ابتدا خودرو را تقریباً متوقف کن.');return;}
+  player.speed=0;const sideX=Math.cos(player.yaw),sideZ=-Math.sin(player.yaw);player.x+=sideX*1.75;player.z+=sideZ*1.75;player.inVehicle=false;showToast('خودرو خاموش نشد','برای بررسی راننده از سمت خودرو پیاده شدی.');
+ }else{
+  const d=Math.hypot(player.x-(playerCarX),player.z-playerCarZ);
+  if(d<4.8){player.x=playerCarX;player.z=playerCarZ;player.inVehicle=true;showToast('واحد گشتی','به خودروی گشتی برگشتی.');}
+  else{showToast('بیش از حد دور هستی','برای سوارشدن به خودروی گشتی نزدیک‌تر شو.');}
+ }
+}
+let playerCarX=2.8,playerCarZ=10;
+function resetRoad(){if(!player.inVehicle){player.x=playerCarX;player.z=playerCarZ;player.inVehicle=true;}player.x=2.8;player.z=10;playerCarX=player.x;playerCarZ=player.z;player.yaw=0;player.speed=0;showToast('موقعیت بازیابی شد','خودروی گشتی به نقطه شروع بازگشت.');}
+const keys=Object.create(null);
+window.addEventListener('keydown',e=>{
+ const k=e.key.toLowerCase();if(['arrowup','arrowdown','arrowleft','arrowright',' '].includes(k))e.preventDefault();keys[k]=true;
+ if(e.repeat)return;
+ if(k==='l'){player.lights=!player.lights;showToast('چراغ گردان',player.lights?'چراغ گردان روشن شد.':'چراغ گردان خاموش شد.');}
+ if(k==='j'){player.siren=!player.siren;showToast('آژیر',player.siren?'آژیر فعال شد.':'آژیر خاموش شد.');}
+ if(k==='f')toggleVehicle();if(k==='e')interact();if(k==='r')resetRoad();if(k==='enter'){if(mission.stage==='available')acceptCall();else if(mission.stage==='stopped')interact();}
+});
+window.addEventListener('keyup',e=>{keys[e.key.toLowerCase()]=false;});
+window.addEventListener('blur',()=>{for(const k in keys)keys[k]=false;});
+function holdButton(id,key){const el=$(id);if(!el)return;const on=e=>{e.preventDefault();keys[key]=true;el.classList.add('pressed');};const off=e=>{e.preventDefault();keys[key]=false;el.classList.remove('pressed');};el.addEventListener('pointerdown',on);el.addEventListener('pointerup',off);el.addEventListener('pointerleave',off);el.addEventListener('pointercancel',off);}
+holdButton('leftTouch','a');holdButton('rightTouch','d');holdButton('gasTouch','w');holdButton('brakeTouch','s');
+$('sirenTouch').addEventListener('click',()=>{player.siren=!player.siren;showToast('آژیر',player.siren?'روشن':'خاموش');});
+$('lightsTouch').addEventListener('click',()=>{player.lights=!player.lights;showToast('چراغ گردان',player.lights?'روشن':'خاموش');});
+$('interactTouch').addEventListener('click',interact);$('exitTouch').addEventListener('click',toggleVehicle);
+function update(dt){
+ const oldX=player.x,oldZ=player.z;
+ if(player.inVehicle){
+  const gas=keys.w||keys.arrowup,brake=keys.s||keys.arrowdown,left=keys.a||keys.arrowleft,right=keys.d||keys.arrowright;
+  if(gas)player.speed+=14*dt;else if(brake)player.speed-=20*dt;else player.speed*=Math.max(0,1-.8*dt);
+  player.speed=Math.max(-7,Math.min(34,player.speed));
+  if(keys[' '])player.speed*=Math.max(0,1-5*dt);
+  const steer=(left?1:0)-(right?1:0);
+  if(steer!==0)player.yaw+=steer*dt*(.35+Math.min(Math.abs(player.speed)/12,1)*1.05)*(player.speed>=0?1:-1);
+  const f=forward(player.yaw);player.x+=f.x*player.speed*dt;player.z+=f.z*player.speed*dt;
+  player.x=Math.max(-155,Math.min(155,player.x));player.z=Math.max(-155,Math.min(155,player.z));
+  for(const b of buildings){if(Math.abs(player.x-b.x)<b.w*.5+1.15&&Math.abs(player.z-b.z)<b.d*.5+1.8){player.x=oldX;player.z=oldZ;player.speed*=.25;showToast('برخورد','با ساختمان برخورد کردی؛ مسیر را اصلاح کن.',900);break;}}
+  playerCarX=player.x;playerCarZ=player.z;
+ }else{
+  const left=keys.a||keys.arrowleft,right=keys.d||keys.arrowright,go=keys.w||keys.arrowup,back=keys.s||keys.arrowdown;
+  if(left)player.yaw+=2.0*dt;if(right)player.yaw-=2.0*dt;
+  const f=forward(player.yaw);const move=(go?1:0)-(back?1:0);player.x+=f.x*move*4.4*dt;player.z+=f.z*move*4.4*dt;
+  player.speed=0;player.x=Math.max(-155,Math.min(155,player.x));player.z=Math.max(-155,Math.min(155,player.z));
+  for(const b of buildings){if(Math.abs(player.x-b.x)<b.w*.5+.35&&Math.abs(player.z-b.z)<b.d*.5+.35){player.x=oldX;player.z=oldZ;break;}}
+ }
+ for(const t of traffic){if(t.axis==='z'){t.z+=-Math.cos(t.yaw)*t.speed*dt;if(t.z<-158)t.z=158;if(t.z>158)t.z=-158;}else{t.x+=-Math.sin(t.yaw)*t.speed*dt;if(t.x<-158)t.x=158;if(t.x>158)t.x=-158;}}
+ if(mission.stage==='enroute'){
+  const s=mission.suspect;
+  if(player.lights&&player.siren&&distance(player,s)<28){s.speed=Math.max(0,s.speed-dt*8);if(s.speed<.25){s.speed=0;s.stopped=true;mission.stage='stopped';$('radioMessage').textContent='رادیو: خودروی مظنون توقف کرد؛ برای بررسی از خودرو پیاده شو.';showToast('خودرو متوقف شد','در مکان امن توقف کن، پیاده شو و به راننده نزدیک شو.',4200);}}
+  else{s.z+=-Math.cos(s.yaw)*s.speed*dt;if(s.z<-150)s.z=150;}
+ }
+ if(!player.inVehicle&&mission.stage==='stopped'&&distance(player,mission.suspect)<4.7&&$('contactPanel').hidden){
+  // The on-screen prompt is kept concise; the E key performs the interaction.
+ }
+}
+function matIdentity(){return [1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1];}
+function matMultiply(a,b){const o=new Array(16);for(let c=0;c<4;c++)for(let r=0;r<4;r++)o[c*4+r]=a[r]*b[c*4]+a[4+r]*b[c*4+1]+a[8+r]*b[c*4+2]+a[12+r]*b[c*4+3];return o;}
+function perspective(fovy,aspect,near,far){const f=1/Math.tan(fovy/2),nf=1/(near-far);const o=new Array(16).fill(0);o[0]=f/aspect;o[5]=f;o[10]=(far+near)*nf;o[11]=-1;o[14]=2*far*near*nf;return o;}
+function lookAt(eye,center,up){
+ let zx=eye[0]-center[0],zy=eye[1]-center[1],zz=eye[2]-center[2],l=Math.hypot(zx,zy,zz)||1;zx/=l;zy/=l;zz/=l;
+ let xx=up[1]*zz-up[2]*zy,xy=up[2]*zx-up[0]*zz,xz=up[0]*zy-up[1]*zx;l=Math.hypot(xx,xy,xz)||1;xx/=l;xy/=l;xz/=l;
+ const yx=zy*xz-zz*xy,yy=zz*xx-zx*xz,yz=zx*xy-zy*xx;
+ return [xx,yx,zx,0,xy,yy,zy,0,xz,yz,zz,0,-(xx*eye[0]+xy*eye[1]+xz*eye[2]),-(yx*eye[0]+yy*eye[1]+yz*eye[2]),-(zx*eye[0]+zy*eye[1]+zz*eye[2]),1];
+}
+const dynamicFloats=[];
+function addLocal(out,car,lx,y,lz,sx,sy,sz,hex){const co=Math.cos(car.yaw),si=Math.sin(car.yaw);addCube(out,car.x+lx*co+lz*si,y,car.z-lx*si+lz*co,sx,sy,sz,car.yaw,hex);}
+function drawCar(out,car,kind,flash){
+ const police=kind==='police',suspect=kind==='suspect';
+ const body=police?'#173d70':(suspect?'#444b52':car.paint);
+ const roof=police?'#e6edf0':(suspect?'#60686c':'#bac5c9');
+ addLocal(out,car,0,.53,0,1.86,.52,3.65,body);
+ addLocal(out,car,0,.73,-1.1,1.72,.23,1.15,police?'#285b8c':body);
+ addLocal(out,car,0,.73,1.15,1.7,.23,.96,body);
+ addLocal(out,car,0,.94,.10,1.25,.52,1.86,police?'#d7e0e5':roof);
+ addLocal(out,car,0,1.00,-.79,1.02,.31,.07,'#183142');
+ addLocal(out,car,0,1.00,.97,1.02,.30,.07,'#1b3440');
+ for(const side of [-1,1]){
+  addLocal(out,car,side*.642,.98,.14,.055,.30,.83,'#203e4b');
+  for(const wz of [-1.08,1.08])addLocal(out,car,side*.96,.34,wz,.27,.5,.68,'#171c22');
+  addLocal(out,car,side*.94,.55,.05,.06,.16,1.25,police?'#f1f5f3':'#555c62');
+ }
+ addLocal(out,car,-.55,.56,-1.83,.28,.17,.07,'#f5e9b8');addLocal(out,car,.55,.56,-1.83,.28,.17,.07,'#f5e9b8');
+ addLocal(out,car,-.57,.55,1.83,.26,.15,.07,'#e34f4f');addLocal(out,car,.57,.55,1.83,.26,.15,.07,'#e34f4f');
+ if(police){
+  addLocal(out,car,0,1.25,0,.83,.12,.30,'#111c2a');
+  addLocal(out,car,-.24,1.34,0,.36,.14,.25,flash?'#ff3f4c':'#7b202b');
+  addLocal(out,car,.24,1.34,0,.36,.14,.25,flash?'#1463ff':'#1d3566');
+  if(car.lights){addLocal(out,car,-1.02,.58,-.2,.05,.26,.64,'#f0f2ed');addLocal(out,car,1.02,.58,-.2,.05,.26,.64,'#f0f2ed');}
+ }
+ if(suspect){addLocal(out,car,0,.99,.05,.12,.07,.08,'#d2bd83');}
+}
+function drawPerson(out,p){
+ addCube(out,p.x,1.00,p.z,.61,.98,.40,p.yaw,'#172f50');addCube(out,p.x,1.65,p.z,.39,.39,.38,p.yaw,'#d0a27e');
+ addCube(out,p.x,1.86,p.z,.40,.12,.39,p.yaw,'#142a44');
+ for(const s of [-1,1]){
+  const co=Math.cos(p.yaw),si=Math.sin(p.yaw),armX=p.x+s*.40*co,armZ=p.z-s*.40*si;
+  addCube(out,armX,1.05,armZ,.2,.78,.22,p.yaw,'#17365c');
+  const legX=p.x+s*.17*co,legZ=p.z-s*.17*si;
+  addCube(out,legX,.36,legZ,.24,.62,.27,p.yaw,'#17243a');
+  addCube(out,legX,.07,legZ-.05,.29,.13,.45,p.yaw,'#161b21');
+ }
+ addCube(out,p.x-.23,1.03,p.z-.20,.14,.19,.10,p.yaw,'#e0c36a');
+}
+function buildDynamic(flash){
+ dynamicFloats.length=0;
+ const policeCar={x:playerCarX,z:playerCarZ,yaw:player.yaw,lights:player.lights};
+ drawCar(dynamicFloats,policeCar,'police',flash);
+ for(const t of traffic){if(Math.abs(t.x-player.x)<115&&Math.abs(t.z-player.z)<115)drawCar(dynamicFloats,t,'traffic',flash);}
+ if(mission.stage!=='complete'&&Math.abs(mission.suspect.x-player.x)<125&&Math.abs(mission.suspect.z-player.z)<125)drawCar(dynamicFloats,mission.suspect,'suspect',flash);
+ if(!player.inVehicle)drawPerson(dynamicFloats,player);
+}
+function render(now){
+ const w=canvas.clientWidth,h=canvas.clientHeight,dpr=Math.min(window.devicePixelRatio||1,1.5);
+ const rw=Math.floor(w*dpr),rh=Math.floor(h*dpr);
+ if(canvas.width!==rw||canvas.height!==rh){canvas.width=rw;canvas.height=rh;gl.viewport(0,0,rw,rh);}
+ const yaw=player.yaw,co=Math.cos(yaw),si=Math.sin(yaw),behind=player.inVehicle?10:5.8,height=player.inVehicle?5.5:2.9;
+ const eye=[player.x+si*behind,player.inVehicle?player.speed*0+height:height,player.z+co*behind];
+ const target=[player.x-si*(player.inVehicle?2.7:1.4),player.inVehicle?.85:1.05,player.z-co*(player.inVehicle?2.7:1.4)];
+ const view=lookAt(eye,target,[0,1,0]),proj=perspective(Math.PI/3,rw/rh,.1,600),vp=matMultiply(proj,view);
+ gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);gl.useProgram(program);gl.uniformMatrix4fv(loc.vp,false,new Float32Array(vp));
+ bindMesh(staticBuffer);gl.drawArrays(gl.TRIANGLES,0,worldFloats.length/9);
+ const flash=Math.floor(now/240)%2===0;buildDynamic(flash);uploadMesh(dynamicBuffer,dynamicFloats,gl.DYNAMIC_DRAW);bindMesh(dynamicBuffer);gl.drawArrays(gl.TRIANGLES,0,dynamicFloats.length/9);
+}
+function updateHud(force){
+ const now=performance.now();if(!force&&now-lastHud<160)return;lastHud=now;
+ $('speedValue').textContent=String(Math.round(Math.abs(player.speed)*3.6));
+ $('gearValue').textContent=(player.inVehicle?(player.speed<-.4?'R':player.speed<.4?'N':'D'):'FOOT')+' · '+(player.inVehicle?'گشت فعال':'پیاده');
+ $('modeText').textContent=player.inVehicle?'خودرو':'پیاده';
+ $('lightLed').className='led '+(player.lights?'on':'');$('sirenLed').className='led '+(player.siren?'warn':'');
+ $('lightText').textContent=player.lights?'روشن':'خاموش';$('sirenText').textContent=player.siren?'روشن':'خاموش';
+ $('lightStatus').textContent=player.lights?'روشن':'خاموش';$('sirenStatus').textContent=player.siren?'روشن':'خاموش';
+ $('vehicleStatus').textContent=player.inVehicle?(Math.abs(player.speed)>1?'در حرکت':'آماده'):'پیاده';
+ const d=distance(player,mission.suspect);$('distanceValue').textContent=mission.stage==='complete'?'تکمیل':Math.round(d)+' متر';$('scoreValue').textContent=score+' XP';
+ $('acceptButton').hidden=mission.stage!=='available';$('nextButton').hidden=mission.stage!=='complete';
+ const stage=mission.stage;
+ if(stage==='available'){$('missionTitle').textContent='تماس ورودی: خودروی مشکوک';$('missionDescription').textContent='مرکز کنترل گزارش یک خودروی مشکوک در خیابان اصلی را دریافت کرده است. تماس را بپذیر تا مأموریت آغاز شود.';$('objectiveText').textContent='تماس را بپذیر، چراغ گردان و آژیر را روشن کن و به خودروی مشخص‌شده نزدیک شو.';$('callTag').textContent='RADIO 01';}
+ if(stage==='enroute'){$('missionTitle').textContent='در مسیر: توقف خودرو';$('missionDescription').textContent='به خودروی جلو نزدیک شو. برای وادار کردن آن به توقف، چراغ گردان و آژیر باید روشن باشند.';$('objectiveText').textContent=player.lights&&player.siren?'با احتیاط فاصله را کم کن؛ راننده در حال واکنش به علائم اضطراری است.':'چراغ گردان (L) و آژیر (J) را روشن کن و در محدوده امن به خودرو نزدیک شو.';$('callTag').textContent='ACTIVE';}
+ if(stage==='stopped'){$('missionTitle').textContent='خودرو متوقف شد';$('missionDescription').textContent='مظنون کنار جاده توقف کرده است. خودرو را ایمن متوقف کن، پیاده شو و به راننده نزدیک شو.';$('objectiveText').textContent=player.inVehicle?'با ترمز خودرو را متوقف کن و F را بزن؛ سپس از کنار خودرو به راننده نزدیک شو.':'به کنار راننده برو و E یا دکمه تعامل را بزن تا بررسی میدانی شروع شود.';$('callTag').textContent='ON SCENE';}
+ if(stage==='contact'){$('missionTitle').textContent='بررسی میدانی';$('missionDescription').textContent='با راننده صحبت کن و مدارک را برای استعلام به مرکز ارسال کن.';$('objectiveText').textContent='مدارک را بررسی کن؛ سپس با توجه به نتیجه استعلام تصمیم بگیر.';$('callTag').textContent='FIELD';}
+ if(stage==='checked'){$('missionTitle').textContent='استعلام دریافت شد';$('missionDescription').textContent='نتیجه استعلام مشخص است. تصمیم نهایی را بر اساس وضعیت گواهینامه و حکم جلب انتخاب کن.';$('objectiveText').textContent='بازداشت یا صدور جریمه / اخطار را متناسب با نتیجه استعلام انتخاب کن.';$('callTag').textContent='REVIEW';}
+ if(stage==='complete'){$('missionTitle').textContent='مأموریت تکمیل شد';$('missionDescription').textContent='نتیجه در گزارش واحد ثبت شده است. می‌توانی تماس بعدی را دریافت کنی و به گشت ادامه بدهی.';$('objectiveText').textContent='برای دریافت تماس بعدی، دکمه مأموریت بعدی را بزن.';$('callTag').textContent='CLEARED';}
+}
+function frame(now){
+ if(!lastFrame)lastFrame=now;const dt=Math.min(.04,(now-lastFrame)/1000);lastFrame=now;
+ update(dt);render(now);updateHud(false);
+ requestAnimationFrame(frame);
+}
+updateHud(true);showToast('خوش آمدی، افسر','تماس مرکز را بپذیر و گشت را آغاز کن.',3500);
+requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>
