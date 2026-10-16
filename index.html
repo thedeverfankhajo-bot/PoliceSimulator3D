@@ -183,14 +183,14 @@ for(let i=0;i<10;i++){
  if(axis==='z')addTraffic(road+(Math.random()<.5?-2.5:2.5),rand(-145,145),dir<0?0:Math.PI,rand(5,10),axis,dir,['#d5d8d5','#a7b2bd','#7d949c','#baad94','#6f828a'][i%5]);
  else addTraffic(rand(-145,145),road+(Math.random()<.5?-2.5:2.5),dir>0?-Math.PI/2:Math.PI/2,rand(5,10),axis,dir,['#d5d8d5','#a7b2bd','#7d949c','#baad94','#6f828a'][i%5]);
 }
-const mission={stage:'available',id:1,hasWarrant:true,suspect:{x:2.8,z:-58,yaw:0,speed:0,stopped:true}};
+const mission={stage:'available',id:1,hasWarrant:true,suspect:{x:2.8,z:-38,yaw:0,speed:0,stopped:true}};
 let score=0,toastTimer=null,toastQueue='',lastHud=0,lastFrame=0;
 const $=id=>document.getElementById(id);
 function showToast(title,body,duration=2600){$('toastTitle').textContent=title;$('toastBody').textContent=body;$('toast').classList.add('show');if(toastTimer)clearTimeout(toastTimer);toastTimer=setTimeout(()=>$('toast').classList.remove('show'),duration);}
 function distance(a,b){return Math.hypot(a.x-b.x,a.z-b.z);}
 function forward(yaw){return {x:-Math.sin(yaw),z:-Math.cos(yaw)};}
 function acceptCall(){if(mission.stage!=='available')return;mission.stage='enroute';mission.suspect.stopped=false;mission.suspect.speed=6;mission.hasWarrant=Math.random()<.62;$('radioMessage').textContent='رادیو: تماس دریافت شد؛ واحد ۱۲ در مسیر است.';showToast('تماس پذیرفته شد','به خودرو نزدیک شو و با چراغ و آژیر آن را متوقف کن.');updateHud(true);}
-function nextMission(){mission.id++;mission.stage='available';mission.hasWarrant=Math.random()<.62;const roadX=Math.round(player.x/40)*40;mission.suspect={x:roadX+2.7,z:player.z-72,yaw:0,speed:0,stopped:true};$('contactPanel').hidden=true;$('radioMessage').textContent='رادیو: تماس جدید دریافت شد.';showToast('تماس جدید','یک خودروی دیگر برای بررسی شناسایی شده است.');updateHud(true);}
+function nextMission(){mission.id++;mission.stage='available';mission.hasWarrant=Math.random()<.62;const roadX=Math.round(player.x/40)*40;mission.suspect={x:roadX+2.7,z:Math.round((player.z-70)/40)*40+2,yaw:0,speed:0,stopped:true};$('contactPanel').hidden=true;$('radioMessage').textContent='رادیو: تماس جدید دریافت شد.';showToast('تماس جدید','یک خودروی دیگر برای بررسی شناسایی شده است.');updateHud(true);}
 $('acceptButton').addEventListener('click',acceptCall);$('nextButton').addEventListener('click',nextMission);
 $('checkButton').addEventListener('click',checkRecords);$('closeContactButton').addEventListener('click',()=>{$('contactPanel').hidden=true;});
 $('arrestButton').addEventListener('click',()=>resolveCase('arrest'));$('citeButton').addEventListener('click',()=>resolveCase('cite'));
