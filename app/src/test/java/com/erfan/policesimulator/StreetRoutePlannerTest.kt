@@ -52,10 +52,11 @@ class StreetRoutePlannerTest {
             assertFalse(
                 "Route edge should not intersect the blocked street segment",
                 if (a.gridZ == b.gridZ) {
+                    val lineZ = a.worldZ
                     val low = minOf(a.worldX, b.worldX)
                     val high = maxOf(a.worldX, b.worldX)
-                    0f >= obstruction.centerZ - obstruction.halfDepth - 2f &&
-                        0f <= obstruction.centerZ + obstruction.halfDepth + 2f &&
+                    lineZ >= obstruction.centerZ - obstruction.halfDepth - 2f &&
+                        lineZ <= obstruction.centerZ + obstruction.halfDepth + 2f &&
                         high >= obstruction.centerX - obstruction.halfWidth - 2f &&
                         low <= obstruction.centerX + obstruction.halfWidth + 2f
                 } else {
