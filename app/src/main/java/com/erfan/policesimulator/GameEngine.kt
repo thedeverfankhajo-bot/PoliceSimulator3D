@@ -217,13 +217,14 @@ internal class GameEngine(context: Context) : GLSurfaceView.Renderer {
             }else{
                 careerProfileStore.repairVehicle(
                     onSaved={profile,result->
+                        bundledSounds.play(if(result.repaired) "confirm" else "error",0.7f)
                         credits=profile.credits
                         vehicleCondition=profile.vehicleCondition
                         garageMessage=result.message
                         if(result.repaired) repairAnimationUntil=SystemClock.uptimeMillis()+2600L
                         announce(garageMessage,SystemClock.uptimeMillis())
                     },
-                    onError={announce("Garage transaction failed. No repair was confirmed.",SystemClock.uptimeMillis())}
+                    onError={bundledSounds.play("error",0.8f);announce("Garage transaction failed. No repair was confirmed.",SystemClock.uptimeMillis())}
                 )
                 announce("Garage: processing repair quote…",now)
             }
