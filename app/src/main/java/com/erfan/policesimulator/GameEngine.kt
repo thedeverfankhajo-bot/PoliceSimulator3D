@@ -409,7 +409,11 @@ internal class GameEngine(context: Context) : GLSurfaceView.Renderer {
         announce(outcome.message,now)
     }
     private fun missionName()=when(stage){0->"Dispatch available";1->"En route: vehicle stop";2->"Suspect stopped";3->"Field contact";4->"Records checked";else->"Call complete"}
-    private fun announce(text:String,now:Long){message=text;messageUntil=now+2800L}
+    private fun announce(text:String,now:Long){
+        message=text
+        messageUntil=now+2800L
+        patrolAudio.playRadioChirp()
+    }
     private fun reportCollision(now:Long,onFoot:Boolean){
         if(now<nextCollisionNoticeAt)return
         nextCollisionNoticeAt=now+1500L
