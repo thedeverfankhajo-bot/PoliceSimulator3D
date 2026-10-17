@@ -114,6 +114,7 @@ internal class GameEngine(context: Context) : GLSurfaceView.Renderer {
     private var policeModel: GlbModel? = null
     private var sedanModel: GlbModel? = null
     private var suvModel: GlbModel? = null
+    private var modelWhiteTexture = 0
     private lateinit var texturedCube:FloatBuffer
     private var texturedVertexCount=0
     private var nextCollisionNoticeAt=0L
@@ -160,6 +161,7 @@ internal class GameEngine(context: Context) : GLSurfaceView.Renderer {
         textureSamplerLoc=GLES20.glGetUniformLocation(textureProgram,"uTexture")
         textureTintLoc=GLES20.glGetUniformLocation(textureProgram,"uTint")
         cube=makeCube();texturedCube=makeTexturedCube()
+        modelWhiteTexture = createWhiteTexture()
         asphaltTexture=loadTexture("textures/asphalt_03_diff_1k.jpg")
         concreteTexture=loadTexture("textures/concrete_floor_diff_1k.jpg")
         // Optional static Kenney GLB models are loaded on the GL thread. A broken or missing
@@ -671,6 +673,21 @@ internal class GameEngine(context: Context) : GLSurfaceView.Renderer {
         }
     }
 
+    private fun createWhiteTexture():Int {
+        val ids=IntArray(1)
+        GLES20.glGenTextures(1,ids,0)
+        if(ids[0]==0) return 0
+        GLES20.glBindTexture(GLES20.GL_TEXTURE_2D,ids[0])
+        GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D,GLES20.GL_TEXTURE_MIN_FILTER,GLES20.GL_LINEAR)
+        GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D,GLES20.GL_TEXTURE_MAG_FILTER,GLES20.GL_LINEAR)
+        GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D,GLES20.GL_TEXTURE_WRAP_S,GLES20.GL_REPEAT)
+        GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D,GLES20.GL_TEXTURE_WRAP_T,GLES20.GL_REPEAT)
+        val pixel=ByteBuffer.allocateDirect(4).order(ByteOrder.nativeOrder())
+        pixel.put(byteArrayOf(0xff.toByte(),0xff.toByte(),0xff.toByte(),0xff.toByte())).position(0)
+        GLES20.glTexImage2D(GLES20.GL_TEXTURE_2D,0,GLES20.GL_RGBA,1,1,0,GLES20.GL_RGBA,GLES20.GL_UNSIGNED_BYTE,pixel)
+        return ids[0]
+    }
+
     private fun loadOptionalModel(path:String):GlbModel? = try {
         GlbModelLoader.load(applicationContext.assets,path)
     } catch (error:Exception) {
@@ -689,7 +706,7 @@ internal class GameEngine(context: Context) : GLSurfaceView.Renderer {
         GLES20.glUniformMatrix4fv(textureMvpLoc,1,false,mvp,0)
         GLES20.glUniform1i(textureSamplerLoc,0)
         GLES20.glActiveTexture(GLES20.GL_TEXTURE0)
-        GLES20.glBindTexture(GLES20.GL_TEXTURE_2D,0)
+        GLES20.glBindTexture(GLES20.GL_TEXTURE_2D,modelWhiteTexture)
         GLES20.glUniform3fv(textureTintLoc,1,tint,0)
         GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER,0)
         GLES20.glEnableVertexAttribArray(texturePositionLoc)
