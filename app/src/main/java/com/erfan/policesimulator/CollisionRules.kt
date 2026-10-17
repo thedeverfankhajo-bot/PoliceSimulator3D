@@ -49,15 +49,30 @@ internal object WorldCollision {
         var hitZ = pz != z
 
         repeat(steps) {
+            // Check the horizontal move at both the current and upcoming Z positions.
+            // This prevents diagonal movement from slipping through a building corner.
+            val nextZ = pz + stepZ
             if (stepX != 0f) {
-                val candidate = (px + stepX).coerceIn(-worldLimit + radius, worldLimit - radius)
-                if (candidate != px + stepX || blocked(candidate, pz, radius, obstacles)) hitX = true
-                else px = candidate
+                val desiredX = px + stepX
+                val candidate = desiredX.coerceIn(-worldLimit + radius, worldLimit - radius)
+                if (
+                    candidate != desiredX ||
+                    blocked(candidate, pz, radius, obstacles) ||
+                    blocked(candidate, nextZ, radius, obstacles)
+                ) {
+                    hitX = true
+                } else {
+                    px = candidate
+                }
             }
             if (stepZ != 0f) {
-                val candidate = (pz + stepZ).coerceIn(-worldLimit + radius, worldLimit - radius)
-                if (candidate != pz + stepZ || blocked(px, candidate, radius, obstacles)) hitZ = true
-                else pz = candidate
+                val desiredZ = pz + stepZ
+                val candidate = desiredZ.coerceIn(-worldLimit + radius, worldLimit - radius)
+                if (candidate != desiredZ || blocked(px, candidate, radius, obstacles)) {
+                    hitZ = true
+                } else {
+                    pz = candidate
+                }
             }
         }
         return MovementResult(px, pz, hitX, hitZ)

@@ -26,11 +26,21 @@ class WorldCollisionTest {
         assertTrue(result.x < -2f)
     }
 
-    @Test fun movementSlidesAlongWall() {
+    @Test fun movementSlidesAlongWallAfterBlockingInwardMovement() {
+        val approach = WorldCollision.move(-8f, 0f, 10f, 0f, 1.5f, listOf(building))
+        assertTrue(approach.collidedX)
+        assertTrue(approach.x <= -3.49f)
+
+        val slide = WorldCollision.move(approach.x, -7f, 0f, 8f, 1.5f, listOf(building))
+        assertEquals(approach.x, slide.x, 0.001f)
+        assertTrue(slide.z > 0f)
+        assertFalse(slide.collided)
+    }
+
+    @Test fun diagonalMovementCannotSlipThroughBuildingCorner() {
         val result = WorldCollision.move(-3.5f, -7f, 4f, 8f, 1.5f, listOf(building))
-        assertTrue(result.collidedX)
-        assertTrue(result.z > 0f)
-        assertTrue(result.x <= -3.49f)
+        assertTrue(result.collided)
+        assertTrue("Should not pass through the building footprint", result.z <= -3.49f)
     }
 
     @Test fun movementStaysInsideWorldBounds() {
