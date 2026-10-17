@@ -1,6 +1,6 @@
 # Asset credits and licenses
 
-This project does not use ripped GTA V / LSPDFR files. Textures are original licensed assets from Poly Haven and are included under CC0 1.0 Universal. The game currently synthesizes its siren and engine at runtime. A curated Kenney CC0 audio library is now bundled for future/explicit playback integration; importing a file does not by itself mean the game triggers it yet.
+This project does not use ripped GTA V / LSPDFR files. Textures are original licensed assets from Poly Haven and are included under CC0 1.0 Universal. The game currently synthesizes its siren and engine at runtime. Selected Kenney CC0 OGG clips are also connected to UI confirmations/errors and specific patrol interactions through Android SoundPool; other bundled clips remain available for future integration.
 
 ## Included textures
 
@@ -21,7 +21,7 @@ The source asset repository's texture ledger also records these files and their 
 
 ## Imported Kenney CC0 vehicle and city models
 
-Source mirror: [eturner58/game-assets](https://github.com/eturner58/game-assets), originally created/distributed by [Kenney](https://kenney.nl). Each source pack provides a `License.txt` declaring CC0 1.0 Universal. The following GLB assets are bundled in the app but are **not yet parsed by the custom OpenGL ES renderer**; current world geometry remains procedurally rendered.
+Source mirror: [eturner58/game-assets](https://github.com/eturner58/game-assets), originally created/distributed by [Kenney](https://kenney.nl). Each source pack provides a `License.txt` declaring CC0 1.0 Universal. The following GLB assets are bundled in the app. The police, sedan, and SUV meshes are now parsed by the custom OpenGL ES renderer for vehicles, with a procedural fallback if loading fails. External color-atlas images are not yet bound to these models, and the city GLB meshes remain unused by the renderer; road/building geometry is still procedural.
 
 | App asset | Source asset | License |
 | --- | --- | --- |
@@ -36,7 +36,7 @@ Source mirror: [eturner58/game-assets](https://github.com/eturner58/game-assets)
 
 ## Imported Kenney CC0 audio
 
-Source packs: [Impact Sounds](https://github.com/eturner58/game-assets/tree/main/kenney/Audio/Impact%20Sounds) and [Interface Sounds](https://github.com/eturner58/game-assets/tree/main/kenney/Audio/Interface%20Sounds). Both source-pack `License.txt` files state CC0 1.0. These compact OGG clips are bundled as source assets; the existing procedural audio engine has not yet been changed to play them automatically.
+Source packs: [Impact Sounds](https://github.com/eturner58/game-assets/tree/main/kenney/Audio/Impact%20Sounds) and [Interface Sounds](https://github.com/eturner58/game-assets/tree/main/kenney/Audio/Interface%20Sounds). Both source-pack `License.txt` files state CC0 1.0. These compact OGG clips are bundled as source assets. UI confirmation/selection/error and selected footstep/impact interactions use the clips through SoundPool; the siren and engine continue to use the procedural audio engine.
 
 - `app/src/main/assets/audio/kenney/footstep_concrete_000.ogg` — concrete footstep
 - `app/src/main/assets/audio/kenney/impactMetal_medium_000.ogg` — medium metal impact
