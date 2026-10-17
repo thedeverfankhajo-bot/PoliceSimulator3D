@@ -43,6 +43,7 @@ class MainActivity : Activity() {
         val info = panel()
         info.addView(label("POLICE SIMULATOR 3D • UNIT 12", 15f, true))
         speed = label("0 KM/H", 22f, true); info.addView(speed)
+        val worldClock = label("19:00 • NIGHT", 12f, true); info.addView(worldClock)
         vehicleHealth = label("VEHICLE CONDITION: 100%", 12f, true); info.addView(vehicleHealth)
         status = label("DISPATCH AVAILABLE", 12f, true); info.addView(status)
         careerStatus = label("CAREER: LOADING PROFILE…", 11f, false); info.addView(careerStatus)
@@ -80,6 +81,12 @@ class MainActivity : Activity() {
         root.addView(controls, FrameLayout.LayoutParams(-1, -2, Gravity.BOTTOM))
         game.setListener { s, msg -> runOnUiThread {
             speed.text = s.speed.toString() + " KM/H"
+            worldClock.text = "${s.worldClock} • ${s.worldPhase}"
+            worldClock.setTextColor(when(s.worldPhase){
+                "NIGHT" -> Color.rgb(143, 192, 255)
+                "DAWN", "DUSK" -> Color.rgb(255, 191, 128)
+                else -> Color.WHITE
+            })
             vehicleHealth.text = "VEHICLE: ${s.vehicleCondition}% • CREDITS: ${s.credits}"
             vehicleHealth.setTextColor(when {
                 s.vehicleCondition < 25 -> Color.rgb(255, 92, 72)
