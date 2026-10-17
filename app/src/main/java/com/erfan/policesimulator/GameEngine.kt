@@ -187,6 +187,33 @@ internal class GameEngine(context: Context) : GLSurfaceView.Renderer {
             x=movement.x;z=movement.z
             if(movement.collided&&move!=0f){patrolAudio.playImpact();reportCollision(now,true)}
         }
+        // Resolve contacts against the updated traffic positions before the next frame.
+        var trafficContact = false
+        val contactRadius = if (onFoot) 0.42f else 1.55f
+        for (car in traffic) {
+            val contact = TrafficCollisionRules.resolve(
+                playerX = x,
+                playerZ = z,
+                trafficX = car.x,
+                trafficZ = car.z,
+                trafficMovesVertically = car.verticalRoad,
+                radius = contactRadius
+            )
+            if (contact.collided) {
+                x = contact.x
+                z = contact.z
+                trafficContact = true
+            }
+        }
+        if (trafficContact) {
+            if (!onFoot) {
+                speed *= 0.35f
+                patrolX = x
+                patrolZ = z
+            }
+            patrolAudio.playImpact()
+            reportCollision(now, onFoot)
+        }
         traffic.forEach{c->if(c.verticalRoad){c.z+=-cos(c.angle)*c.speed*dt;if(c.z< -165f)c.z=165f;if(c.z>165f)c.z= -165f}else{c.x+=-sin(c.angle)*c.speed*dt;if(c.x< -165f)c.x=165f;if(c.x>165f)c.x= -165f}}
         if(stage==1){if(lights&&siren&&distance(x,z,suspectX,suspectZ)<22f){stage=2;objective="Stop safely, exit the car and approach the driver.";radio="Dispatch: suspect stopped. Conduct a field contact.";announce("Vehicle stopped. Conduct a field contact.",now)}
             else{suspectZ-=5f*dt;if(suspectZ< -165f)suspectZ=165f}}
