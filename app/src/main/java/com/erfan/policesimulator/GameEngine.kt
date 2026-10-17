@@ -43,6 +43,8 @@ internal class GameEngine(context: Context) : GLSurfaceView.Renderer {
     @Volatile private var suspectX=2.5f
     @Volatile private var suspectZ=-38f
     @Volatile private var warrant=true
+    @Volatile private var callIndex=0
+    @Volatile private var activeCallout: DispatchCallout?=null
     @Volatile private var pursuitActive=false
     private var suspectRoute: List<RoadNode> = emptyList()
     private var suspectRouteIndex = 1
@@ -182,10 +184,18 @@ internal class GameEngine(context: Context) : GLSurfaceView.Renderer {
             else announce(if(onFoot)"Move closer to your patrol car." else "Stop before exiting.",now)
         }
         if(nextCall){nextCall=false
-            if(stage==0||stage==5){stage=1;suspectX=(kotlin.math.round(x/40f)*40f)+2.5f;suspectZ=(kotlin.math.round((z-65f)/40f)*40f)+2f
+            if(stage==0||stage==5){
+                stage=1
+                val callout=DispatchCalloutFactory.create(callIndex++, now)
+                activeCallout=callout
+                suspectX=(kotlin.math.round(x/40f)*40f)+2.5f
+                suspectZ=(kotlin.math.round((z-65f)/40f)*40f)+2f
                 pursuitActive=false;suspectRoute=emptyList();suspectRouteIndex=1;suspectAngle=0f
-                warrant=SystemClock.uptimeMillis()%2L==0L;objective="Activate lights and siren, then approach the highlighted vehicle."
-                radio="Dispatch: suspicious vehicle assigned to Unit 12.";announce("Call accepted. Locate the suspect.",now)}
+                warrant=callout.hasActiveWarrant
+                objective=callout.approachObjective
+                radio=callout.dispatchMessage
+                announce("Call accepted: ${callout.title}.",now)
+            }
             else announce("Complete the current call first.",now)
         }
         if(arrestDecision!=0){
@@ -273,7 +283,16 @@ internal class GameEngine(context: Context) : GLSurfaceView.Renderer {
         }
         if(stage==1){
             var suspectDistance=distance(x,z,suspectX,suspectZ)
-            if(lights&&siren&&!onFoot&&suspectDistance<=PursuitRules.START_FLEE_DISTANCE&&!pursuitActive){
+            val callout=activeCallout
+            val withinContactRange=suspectDistance<=PursuitRules.START_FLEE_DISTANCE
+            if(callout?.suspectResponse==SuspectResponse.COMPLIES&&lights&&siren&&!onFoot&&withinContactRange&&!pursuitActive){
+                pursuitActive=false
+                stage=2
+                suspectRoute=emptyList()
+                objective=callout.complianceObjective
+                radio=callout.complianceRadioMessage
+                announce("Driver has complied. Complete the stop.",now)
+            }else if(callout?.suspectResponse==SuspectResponse.FLEES&&lights&&siren&&!onFoot&&suspectDistance<=PursuitRules.START_FLEE_DISTANCE&&!pursuitActive){
                 pursuitActive=true
                 suspectRoute=StreetRoutePlanner.planEscapeRoute(
                     startX=suspectX,
@@ -345,12 +364,15 @@ internal class GameEngine(context: Context) : GLSurfaceView.Renderer {
                         }
                     }
                     if(stage==1){
-                        objective="Pursuit active. Follow the suspect along city streets and close the distance."
-                        radio="Dispatch: vehicle pursuit active. Requesting backup."
+                        objective=callout?.pursuitObjective ?: "Pursuit active. Follow the suspect along city streets and close the distance."
+                        radio=if(callout?.type==DispatchType.STOLEN_VEHICLE)
+                            "Dispatch: stolen vehicle pursuit active. Backup requested."
+                        else "Dispatch: vehicle pursuit active. Requesting backup."
                     }
                 }
-            }else{
-                objective="Approach the suspicious vehicle. Activate lights and siren to initiate pursuit, or stop nearby to conduct a contact."
+            }else if(stage==1){
+                objective=callout?.approachObjective
+                    ?: "Approach the suspicious vehicle. Activate lights and siren to initiate pursuit, or stop nearby to conduct a contact."
             }
         }
         patrolAudio.update(speed,siren,onFoot&&(gas||brake))
