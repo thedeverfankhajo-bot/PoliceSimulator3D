@@ -547,6 +547,17 @@ internal class GameEngine(context: Context) : GLSurfaceView.Renderer {
     private fun distance(ax:Float,az:Float,bx:Float,bz:Float):Float{val dx=ax-bx;val dz=az-bz;return kotlin.math.sqrt(dx*dx+dz*dz)}
     private fun trafficWorldX(car:Car)=car.x+(if(car.verticalRoad)car.shoulderOffset else 0f)
     private fun trafficWorldZ(car:Car)=car.z+(if(car.verticalRoad)0f else car.shoulderOffset)
+    private fun drawEmergencyGroundSpill(carX:Float,carZ:Float,heading:Float,now:Long,state:EmergencyLightState){
+        val flashPhase=(now/230L)%2L==0L
+        val tint=if(flashPhase)rgb(0xff3048) else rgb(0x315dff)
+        val forwardX=-sin(heading);val forwardZ=-cos(heading)
+        val rightX=cos(heading);val rightZ=-sin(heading)
+        val alpha=state.reflectionIntensity*if(worldLighting.daylight<0.3f)0.24f else 0.12f
+        drawGroundBeam(carX+forwardX*0.15f+rightX*0.35f,carZ+forwardZ*0.15f+rightZ*0.35f,
+            carX+forwardX*2.4f+rightX*1.8f,carZ+forwardZ*2.4f+rightZ*1.8f,1.3f,alpha,tint)
+        drawGroundBeam(carX+forwardX*0.15f-rightX*0.35f,carZ+forwardZ*0.15f-rightZ*0.35f,
+            carX+forwardX*2.4f-rightX*1.8f,carZ+forwardZ*2.4f-rightZ*1.8f,1.3f,alpha,if(flashPhase)rgb(0x315dff)else rgb(0xff3048))
+    }
     private fun drawHeadlightBeams(carX:Float,carZ:Float,heading:Float,now:Long){
         val fx=-sin(heading);val fz=-cos(heading);val rx=cos(heading);val rz=-sin(heading)
         val alpha=if(worldLighting.daylight<0.25f)0.18f else if(worldLighting.daylight<0.7f)0.07f else 0.015f
@@ -558,14 +569,14 @@ internal class GameEngine(context: Context) : GLSurfaceView.Renderer {
         val pulse=0.94f+0.06f*sin(now/350.0).toFloat()
         for(side in -1..1 step 2)drawBox(carX+fx*1.08f+rx*side*0.48f,0.64f,carZ+fz*1.08f+rz*side*0.48f,0.22f,0.12f,0.12f,heading,rgb(0xfff1c2,pulse),true)
     }
-    private fun drawGroundBeam(sx:Float,sz:Float,ex:Float,ez:Float,width:Float,alpha:Float){
+    private fun drawGroundBeam(sx:Float,sz:Float,ex:Float,ez:Float,width:Float,alpha:Float,tint:FloatArray=rgb(0xffe9b2)){
         val dx=ex-sx;val dz=ez-sz;val len=sqrt(dx*dx+dz*dz).coerceAtLeast(0.01f)
         val px=-dz/len*width*0.5f;val pz=dx/len*width*0.5f
         val vertices=floatArrayOf(
-            sx,0.035f,sz, sx+px,0.035f,sz+pz, ex-px,0.035f,ez-pz,
-            sx,0.035f,sz, ex-px,0.035f,ez-pz, ex,0.035f,ez,
-            sx,0.035f,sz, ex,0.035f,ez, ex+px,0.035f,ez+pz,
-            sx,0.035f,sz, ex+px,0.035f,ez+pz, sx-px,0.035f,sz-pz
+            sx,0.065f,sz, sx+px,0.065f,sz+pz, ex-px,0.065f,ez-pz,
+            sx,0.065f,sz, ex-px,0.065f,ez-pz, ex,0.065f,ez,
+            sx,0.065f,sz, ex,0.065f,ez, ex+px,0.065f,ez+pz,
+            sx,0.065f,sz, ex+px,0.065f,ez+pz, sx-px,0.065f,sz-pz
         )
         val buffer=ByteBuffer.allocateDirect(vertices.size*4).order(ByteOrder.nativeOrder()).asFloatBuffer()
         buffer.put(vertices).position(0)
@@ -573,7 +584,7 @@ internal class GameEngine(context: Context) : GLSurfaceView.Renderer {
         Matrix.setIdentityM(model,0);Matrix.multiplyMM(mvp,0,vp,0,model,0)
         GLES20.glUniformMatrix4fv(mvpLoc,1,false,mvp,0)
         GLES20.glVertexAttribPointer(posLoc,3,GLES20.GL_FLOAT,false,0,buffer);GLES20.glEnableVertexAttribArray(posLoc)
-        GLES20.glUniform3fv(colorLoc,1,rgb(0xffe9b2),0);GLES20.glUniform1f(alphaLoc,alpha)
+        GLES20.glUniform3fv(colorLoc,1,tint,0);GLES20.glUniform1f(alphaLoc,alpha)
         GLES20.glEnable(GLES20.GL_BLEND);GLES20.glBlendFunc(GLES20.GL_SRC_ALPHA,GLES20.GL_ONE_MINUS_SRC_ALPHA);GLES20.glDepthMask(false)
         GLES20.glDrawArrays(GLES20.GL_TRIANGLES,0,vertices.size/3)
         GLES20.glDepthMask(true);GLES20.glDisable(GLES20.GL_BLEND);GLES20.glUniform1f(alphaLoc,1f)
@@ -633,9 +644,10 @@ internal class GameEngine(context: Context) : GLSurfaceView.Renderer {
         for(side in intArrayOf(-1,1))for(end in intArrayOf(-1,1)){val lx=side*0.92f;val lz=end*1.05f;drawBox(cx+lx*cos(a)+lz*sin(a),0.32f,cz-lx*sin(a)+lz*cos(a),0.28f,0.48f,0.58f,a,rgb(0x171c21))}
         if(police){
             drawBox(cx,1.2f,cz,0.8f,0.12f,0.28f,a,rgb(0x17202a))
-            val flash=now/230L%2L==0L
-            drawBox(cx-0.23f,1.3f,cz,0.32f,0.14f,0.22f,a,rgb(if(lights&&flash)0xff394b else 0x7d202a),lights&&flash)
-            drawBox(cx+0.23f,1.3f,cz,0.32f,0.14f,0.22f,a,rgb(if(lights&&!flash)0x235dff else 0x20356d),lights&&!flash)
+            val emergency=EmergencyLightRules.state(now.coerceAtLeast(0L),lights,worldLighting.daylight)
+            drawBox(cx-0.23f,1.3f,cz,0.32f,0.14f,0.22f,a,rgb(if(emergency.redActive)0xff394b else 0x7d202a),emergency.redActive)
+            drawBox(cx+0.23f,1.3f,cz,0.32f,0.14f,0.22f,a,rgb(if(emergency.blueActive)0x235dff else 0x20356d),emergency.blueActive)
+            if(emergency.reflectionIntensity>0f) drawEmergencyGroundSpill(cx,cz,a,now,emergency)
         }
     }
     private fun loadTexture(assetPath:String):Int{
