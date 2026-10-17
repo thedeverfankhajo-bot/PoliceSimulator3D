@@ -94,11 +94,18 @@ class MainActivity : Activity() {
     override fun onResume() {
         super.onResume()
         if (::glView.isInitialized) glView.onResume()
+        if (::game.isInitialized) game.resumeAudio()
     }
 
     override fun onPause() {
+        if (::game.isInitialized) game.pauseAudio()
         if (::glView.isInitialized) glView.onPause()
         super.onPause()
+    }
+
+    override fun onDestroy() {
+        if (::game.isInitialized) game.releaseAudio()
+        super.onDestroy()
     }
 
     private fun panel() = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setPadding(10, 8, 10, 8); setBackgroundColor(Color.argb(215, 8, 20, 31)) }

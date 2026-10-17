@@ -7,16 +7,17 @@ Native Android police-patrol simulator inspired by the open-world patrol loop of
 - Native Android app entry point: `app/src/main/java/com/erfan/policesimulator/MainActivity.kt`
 - Custom 3D scene and gameplay loop: `GameEngine.kt`
 - OpenGL ES 2.0 via Android `GLSurfaceView` and `GLSurfaceView.Renderer`
-- Procedurally generated low-poly city blocks, roads, windows, streetlights, traffic and patrol/suspect vehicles
+- Procedurally generated low-poly city blocks, with CC0 Poly Haven Asphalt 03 road texturing and Concrete Floor facade texturing
 - Third-person patrol driving with touch controls for steering, acceleration and braking
 - Building collision for patrol-vehicle and on-foot movement, including wall sliding, world bounds and sub-stepped movement to reduce tunnelling
-- Emergency lightbar toggle, dispatch callouts, suspect stop, on-foot field contact and licence/warrant records check
+- Animated red/blue emergency lightbar, native synthesized siren/engine/impact audio, and a basic walking gait for the officer
+- Dispatch callouts, suspect stop, on-foot field contact and licence/warrant records check
 - Explicit **ARREST** versus **CITE / WARN** decision with separate outcomes and score penalties for an unsupported decision
 - OpenGL rendering pauses and resumes with the Android activity lifecycle
 - Career XP, completed calls and decision accuracy persist locally with AndroidX DataStore
 - Landscape full-screen layout; offline-first, no analytics or account requirement
 
-This is an early playable foundation, not feature parity with LSPDFR or a commercial open-world game. The current world uses procedural low-poly geometry rather than external game assets. Vehicle-to-vehicle collision physics, realistic pedestrian AI, pursuit behavior, audio and map navigation remain future work. Career persistence is local to the device and is not synced to a server.
+This is an early playable foundation, not feature parity with LSPDFR or a commercial open-world game. The world uses procedural low-poly geometry together with licensed CC0 diffuse textures. Siren, engine and impact sounds are synthesized locally so the app does not need bundled copyrighted audio. Vehicle-to-vehicle collision physics, richer pedestrian AI, advanced pursuit behavior, recorded radio voice, and map navigation remain future work. Career persistence is local to the device and is not synced to a server.
 
 ## Build the Android app
 
@@ -40,6 +41,8 @@ The app compiles and targets Android 16 (API 36). The debug APK is produced at `
 ## Technical references
 
 - [Android OpenGL ES overview](https://developer.android.com/develop/ui/views/graphics/opengl/about-opengl)
+- [Android AudioTrack](https://developer.android.com/reference/android/media/AudioTrack)
+- [Poly Haven CC0 license](https://polyhaven.com/license)
 - [Build an OpenGL ES environment](https://developer.android.com/develop/ui/views/graphics/opengl/environment)
 - [Displaying graphics with OpenGL ES](https://developer.android.com/develop/ui/views/graphics/opengl)
 - [GLSurfaceView lifecycle requirements](https://developer.android.com/reference/android/opengl/GLSurfaceView)
@@ -50,4 +53,4 @@ The app compiles and targets Android 16 (API 36). The debug APK is produced at `
 
 ## License
 
-No third-party game assets are bundled. A repository license should be chosen by the maintainer before outside contributions or asset packs are accepted.
+Texture sources and licensing are recorded in [`ASSET_CREDITS.md`](ASSET_CREDITS.md). All included third-party texture files are CC0 1.0; synthesized sound contains no third-party sample. A repository software license should still be chosen by the maintainer before outside contributions.
