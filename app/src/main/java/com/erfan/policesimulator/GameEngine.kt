@@ -44,6 +44,9 @@ internal class GameEngine(context: Context) : GLSurfaceView.Renderer {
     @Volatile private var suspectZ=-38f
     @Volatile private var warrant=true
     @Volatile private var pursuitActive=false
+    private var suspectRoute: List<RoadNode> = emptyList()
+    private var suspectRouteIndex = 1
+    private var suspectAngle = 0f
     @Volatile private var radio="Dispatch: Unit 12 ready for patrol."
     @Volatile private var objective="Accept a call, activate lights and siren, then approach the suspect."
     @Volatile private var message="Welcome, Officer. Accept the dispatch call."
@@ -167,7 +170,7 @@ internal class GameEngine(context: Context) : GLSurfaceView.Renderer {
                 drawCar(carX,carZ,c.angle,c.color,false,now)
         }
         if(stage!=5 && RenderDistance.intersectsCircle(x,z,suspectX,suspectZ,1f,1.9f,VEHICLE_RENDER_DISTANCE))
-            drawCar(suspectX,suspectZ,0f,rgb(0x9aa5ab),false,now)
+            drawCar(suspectX,suspectZ,suspectAngle,rgb(0x9aa5ab),false,now)
         if(!onFoot)drawCar(patrolX,patrolZ,angle,rgb(0x1d4777),true,now) else drawOfficer(now)
         if(now-lastUi>180L){lastUi=now;listener?.invoke(snapshot(),if(now<messageUntil)message else "")}
     }
@@ -180,7 +183,8 @@ internal class GameEngine(context: Context) : GLSurfaceView.Renderer {
         }
         if(nextCall){nextCall=false
             if(stage==0||stage==5){stage=1;suspectX=(kotlin.math.round(x/40f)*40f)+2.5f;suspectZ=(kotlin.math.round((z-65f)/40f)*40f)+2f
-                pursuitActive=false;warrant=SystemClock.uptimeMillis()%2L==0L;objective="Activate lights and siren, then approach the highlighted vehicle."
+                pursuitActive=false;suspectRoute=emptyList();suspectRouteIndex=1;suspectAngle=0f
+                warrant=SystemClock.uptimeMillis()%2L==0L;objective="Activate lights and siren, then approach the highlighted vehicle."
                 radio="Dispatch: suspicious vehicle assigned to Unit 12.";announce("Call accepted. Locate the suspect.",now)}
             else announce("Complete the current call first.",now)
         }
@@ -268,37 +272,85 @@ internal class GameEngine(context: Context) : GLSurfaceView.Renderer {
             reportCollision(now, onFoot)
         }
         if(stage==1){
-            val suspectDistance=distance(x,z,suspectX,suspectZ)
-            if(lights&&siren&&!onFoot&&suspectDistance<=PursuitRules.START_FLEE_DISTANCE)pursuitActive=true
-            val fleeing=pursuitActive&&!onFoot
-            val escape=suspectDistance>=PursuitRules.ESCAPE_DISTANCE
-            if(escape){
-                stage=5
-                objective="Suspect escaped. Request a new call when ready."
-                radio="Dispatch: suspect lost. Unit 12, return to patrol."
-                announce("Suspect escaped. Call closed.",now)
-            }else if(fleeing){
-                val targetSpeed=PursuitRules.FLEE_SPEED_FACTOR*8f
-                val step=min(targetSpeed*dt,max(0f,suspectDistance-0.1f))
-                val horizontal=abs(x-suspectX)>abs(z-suspectZ)
-                if(horizontal){suspectX+=if(suspectX<x) -step else step}
-                else{suspectZ+=if(suspectZ<z) -step else step}
-                objective="Pursuit active. Follow the suspect and close the distance."
-                radio="Dispatch: vehicle pursuit active. Requesting backup."
-            }else if(!lights||!siren){
-                val decision=PursuitRules.update(PursuitState.SUSPICIOUS,suspectDistance,false,abs(speed),dt)
-                suspectZ-=5f*dt
-                if(suspectZ< -165f)suspectZ=165f
-                if(suspectDistance< PursuitRules.STOP_DISTANCE && abs(speed)<PursuitRules.STOP_PATROL_SPEED){
-                    stage=2;pursuitActive=false
-                    objective="Suspect stopped. Exit the car and approach the driver."
-                    radio="Dispatch: suspect stopped. Conduct a field contact."
-                    announce("Vehicle stopped. Conduct a field contact.",now)
-                }else if(decision.escaped){
-                    stage=5;objective="Suspect escaped. Request a new call when ready."
+            var suspectDistance=distance(x,z,suspectX,suspectZ)
+            if(lights&&siren&&!onFoot&&suspectDistance<=PursuitRules.START_FLEE_DISTANCE&&!pursuitActive){
+                pursuitActive=true
+                suspectRoute=StreetRoutePlanner.planEscapeRoute(
+                    startX=suspectX,
+                    startZ=suspectZ,
+                    patrolX=x,
+                    patrolZ=z,
+                    obstacles=buildingColliders
+                )
+                suspectRouteIndex=1
+                suspectRoute.firstOrNull()?.let { first ->
+                    suspectX=first.worldX
+                    suspectZ=first.worldZ
+                }
+                announce("Suspect fleeing. Pursuit route calculated.",now)
+            }
+
+            suspectDistance=distance(x,z,suspectX,suspectZ)
+            if(suspectDistance<=PursuitRules.STOP_DISTANCE&&abs(speed)<=PursuitRules.STOP_PATROL_SPEED){
+                stage=2
+                pursuitActive=false
+                suspectRoute=emptyList()
+                objective="Suspect stopped. Exit the patrol car and approach on foot."
+                radio="Dispatch: suspect vehicle stopped. Proceed with field contact."
+                announce("Vehicle stopped. Conduct a field contact.",now)
+            }else if(pursuitActive){
+                if(suspectRoute.size<2){
+                    stage=5
+                    pursuitActive=false
+                    objective="No clear escape route. Request a new call when ready."
+                    radio="Dispatch: pursuit ended. Unit 12 return to patrol."
+                    announce("Pursuit route unavailable. Call closed.",now)
+                }else{
+                    val progress=StreetRoutePlanner.advanceAlongRoute(
+                        route=suspectRoute,
+                        routeIndex=suspectRouteIndex,
+                        currentX=suspectX,
+                        currentZ=suspectZ,
+                        speed=PursuitRules.FLEE_SPEED_FACTOR*8f,
+                        deltaSeconds=dt
+                    )
+                    suspectX=progress.x
+                    suspectZ=progress.z
+                    suspectRouteIndex=progress.routeIndex
+                    suspectAngle=progress.headingRadians
+                    suspectDistance=distance(x,z,suspectX,suspectZ)
+
+                    if(suspectDistance>=PursuitRules.ESCAPE_DISTANCE){
+                        stage=5
+                        pursuitActive=false
+                        suspectRoute=emptyList()
+                        objective="Suspect escaped. Request a new call when ready."
+                        radio="Dispatch: suspect lost. Unit 12, return to patrol."
+                        announce("Suspect escaped. Call closed.",now)
+                    }else if(progress.finished){
+                        suspectRoute=StreetRoutePlanner.planEscapeRoute(
+                            startX=suspectX,
+                            startZ=suspectZ,
+                            patrolX=x,
+                            patrolZ=z,
+                            obstacles=buildingColliders
+                        )
+                        suspectRouteIndex=1
+                        if(suspectRoute.size<2){
+                            stage=5
+                            pursuitActive=false
+                            objective="Suspect reached a dead end. Request a new call when ready."
+                            radio="Dispatch: pursuit ended. Unit 12 return to patrol."
+                            announce("Suspect route ended. Call closed.",now)
+                        }
+                    }
+                    if(stage==1){
+                        objective="Pursuit active. Follow the suspect along city streets and close the distance."
+                        radio="Dispatch: vehicle pursuit active. Requesting backup."
+                    }
                 }
             }else{
-                objective="Approach the suspect vehicle and close the distance."
+                objective="Approach the suspicious vehicle. Activate lights and siren to initiate pursuit, or stop nearby to conduct a contact."
             }
         }
         patrolAudio.update(speed,siren,onFoot&&(gas||brake))

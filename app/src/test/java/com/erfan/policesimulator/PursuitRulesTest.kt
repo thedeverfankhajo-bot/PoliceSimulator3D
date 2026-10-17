@@ -37,8 +37,8 @@ class PursuitRulesTest {
         assertEquals(1.324f, PursuitRules.approachSpeedFactor(1f, 1.6f, 0.3f), 0.001f)
     }
 
-    @Test fun junctionChoicePrefersDistanceFromPatrol() {
-        assertTrue(PursuitRules.chooseVerticalRoad(0f, 0f, 0f, 10f))
+    @Test fun junctionChoicePrefersGreaterManhattanDistance() {
+        assertFalse(PursuitRules.chooseVerticalRoad(0f, 0f, 0f, 10f))
     }
 
     @Test(expected = IllegalArgumentException::class)
