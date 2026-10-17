@@ -1,0 +1,29 @@
+{
+  "formatVersion": 1,
+  "license": "CC0-1.0",
+  "notes": "Bundled external assets are licensed for reuse. GLB files and new OGG clips are packaged but are not yet connected to the custom OpenGL ES/audio runtime.",
+  "models": [
+    "models/kenney/cars/police.glb",
+    "models/kenney/cars/sedan.glb",
+    "models/kenney/cars/suv.glb",
+    "models/kenney/cars/taxi.glb",
+    "models/kenney/city/road-straight.glb",
+    "models/kenney/city/road-intersection.glb",
+    "models/kenney/city/road-crossing.glb",
+    "models/kenney/city/traffic-light.glb"
+  ],
+  "audio": [
+    "audio/kenney/footstep_concrete_000.ogg",
+    "audio/kenney/impactMetal_medium_000.ogg",
+    "audio/kenney/impactGlass_light_000.ogg",
+    "audio/kenney/confirmation_001.ogg",
+    "audio/kenney/select_001.ogg",
+    "audio/kenney/error_008.ogg"
+  ],
+  "textures": [
+    "textures/asphalt_03_diff_1k.jpg",
+    "textures/concrete_floor_diff_1k.jpg",
+    "textures/corrugated_iron_diff_1k.jpg",
+    "textures/rusty_painted_metal_diff_1k.jpg"
+  ]
+}
