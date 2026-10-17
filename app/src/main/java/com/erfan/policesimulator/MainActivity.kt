@@ -16,6 +16,7 @@ import android.widget.TextView
 class MainActivity : Activity() {
     private lateinit var game: GameEngine
     private lateinit var speed: TextView
+    private lateinit var vehicleHealth: TextView
     private lateinit var status: TextView
     private lateinit var careerStatus: TextView
     private lateinit var objective: TextView
@@ -41,6 +42,7 @@ class MainActivity : Activity() {
         val info = panel()
         info.addView(label("POLICE SIMULATOR 3D • UNIT 12", 15f, true))
         speed = label("0 KM/H", 22f, true); info.addView(speed)
+        vehicleHealth = label("VEHICLE CONDITION: 100%", 12f, true); info.addView(vehicleHealth)
         status = label("DISPATCH AVAILABLE", 12f, true); info.addView(status)
         careerStatus = label("CAREER: LOADING PROFILE…", 11f, false); info.addView(careerStatus)
         top.addView(info, LinearLayout.LayoutParams(0, -2, 1f))
@@ -75,6 +77,12 @@ class MainActivity : Activity() {
         root.addView(controls, FrameLayout.LayoutParams(-1, -2, Gravity.BOTTOM))
         game.setListener { s, msg -> runOnUiThread {
             speed.text = s.speed.toString() + " KM/H"
+            vehicleHealth.text = "VEHICLE CONDITION: ${s.vehicleCondition}%"
+            vehicleHealth.setTextColor(when {
+                s.vehicleCondition < 25 -> Color.rgb(255, 92, 72)
+                s.vehicleCondition < 50 -> Color.rgb(255, 177, 66)
+                else -> Color.WHITE
+            })
             status.text = s.mission + if (s.onFoot) " • ON FOOT" else " • IN VEHICLE"
             careerStatus.text = "CAREER: ${s.career.xp} XP • CALLS: ${s.career.callsCompleted} • CORRECT: ${s.career.correctDecisions}/${s.career.callsCompleted}"
             objective.text = s.objective
