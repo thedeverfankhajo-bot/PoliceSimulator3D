@@ -111,6 +111,9 @@ internal class GameEngine(context: Context) : GLSurfaceView.Renderer {
     private var textureTintLoc=0
     private var asphaltTexture=0
     private var concreteTexture=0
+    private var policeModel: GlbModel? = null
+    private var sedanModel: GlbModel? = null
+    private var suvModel: GlbModel? = null
     private lateinit var texturedCube:FloatBuffer
     private var texturedVertexCount=0
     private var nextCollisionNoticeAt=0L
@@ -159,6 +162,11 @@ internal class GameEngine(context: Context) : GLSurfaceView.Renderer {
         cube=makeCube();texturedCube=makeTexturedCube()
         asphaltTexture=loadTexture("textures/asphalt_03_diff_1k.jpg")
         concreteTexture=loadTexture("textures/concrete_floor_diff_1k.jpg")
+        // Optional static Kenney GLB models are loaded on the GL thread. A broken or missing
+        // model never prevents the existing procedural vehicle renderer from working.
+        policeModel = loadOptionalModel("models/kenney/cars/police.glb")
+        sedanModel = loadOptionalModel("models/kenney/cars/sedan.glb")
+        suvModel = loadOptionalModel("models/kenney/cars/suv.glb")
         buildCity();buildTraffic()
     }
     override fun onSurfaceChanged(gl:GL10?,width:Int,height:Int){
@@ -642,8 +650,18 @@ internal class GameEngine(context: Context) : GLSurfaceView.Renderer {
         }
     }
     private fun drawCar(cx:Float,cz:Float,a:Float,paint:FloatArray,police:Boolean,now:Long){
-        drawBox(cx,0.52f,cz,1.8f,0.5f,3.55f,a,paint);drawBox(cx,0.91f,cz,1.18f,0.48f,1.75f,a,if(police)rgb(0xe1e7e9)else rgb(0xbac5c8))
-        for(side in intArrayOf(-1,1))for(end in intArrayOf(-1,1)){val lx=side*0.92f;val lz=end*1.05f;drawBox(cx+lx*cos(a)+lz*sin(a),0.32f,cz-lx*sin(a)+lz*cos(a),0.28f,0.48f,0.58f,a,rgb(0x171c21))}
+        val model = if (police) policeModel else sedanModel
+        if (model != null) {
+            drawGlbModel(model,cx,cz,a,1.8f,1.35f,3.55f,paint)
+        } else {
+            // Procedural fallback is retained for low-memory devices and invalid optional assets.
+            drawBox(cx,0.52f,cz,1.8f,0.5f,3.55f,a,paint)
+            drawBox(cx,0.91f,cz,1.18f,0.48f,1.75f,a,if(police)rgb(0xe1e7e9)else rgb(0xbac5c8))
+            for(side in intArrayOf(-1,1))for(end in intArrayOf(-1,1)){
+                val lx=side*0.92f;val lz=end*1.05f
+                drawBox(cx+lx*cos(a)+lz*sin(a),0.32f,cz-lx*sin(a)+lz*cos(a),0.28f,0.48f,0.58f,a,rgb(0x171c21))
+            }
+        }
         if(police){
             drawBox(cx,1.2f,cz,0.8f,0.12f,0.28f,a,rgb(0x17202a))
             val emergency=EmergencyLightRules.state(now.coerceAtLeast(0L),lights,worldLighting.daylight)
@@ -651,6 +669,41 @@ internal class GameEngine(context: Context) : GLSurfaceView.Renderer {
             drawBox(cx+0.23f,1.3f,cz,0.32f,0.14f,0.22f,a,rgb(if(emergency.blueActive)0x235dff else 0x20356d),emergency.blueActive)
             if(emergency.reflectionIntensity>0f) drawEmergencyGroundSpill(cx,cz,a,now,emergency)
         }
+    }
+
+    private fun loadOptionalModel(path:String):GlbModel? = try {
+        GlbModelLoader.load(applicationContext.assets,path)
+    } catch (error:Exception) {
+        android.util.Log.w("PoliceSimulator3D","Optional model unavailable: $path",error)
+        null
+    }
+
+    private fun drawGlbModel(modelData:GlbModel,cx:Float,cz:Float,heading:Float,
+                             width:Float,height:Float,length:Float,tint:FloatArray){
+        Matrix.setIdentityM(model,0)
+        Matrix.translateM(model,0,cx,0.08f,cz)
+        Matrix.rotateM(model,0,Math.toDegrees(heading.toDouble()).toFloat(),0f,1f,0f)
+        Matrix.scaleM(model,0,width,height,length)
+        Matrix.multiplyMM(mvp,0,vp,0,model,0)
+        GLES20.glUseProgram(textureProgram)
+        GLES20.glUniformMatrix4fv(textureMvpLoc,1,false,mvp,0)
+        GLES20.glUniform1i(textureSamplerLoc,0)
+        GLES20.glActiveTexture(GLES20.GL_TEXTURE0)
+        GLES20.glBindTexture(GLES20.GL_TEXTURE_2D,0)
+        GLES20.glUniform3fv(textureTintLoc,1,tint,0)
+        GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER,0)
+        GLES20.glEnableVertexAttribArray(texturePositionLoc)
+        GLES20.glEnableVertexAttribArray(textureUvLoc)
+        for(part in modelData.primitives){
+            part.vertices.position(0)
+            GLES20.glVertexAttribPointer(texturePositionLoc,3,GLES20.GL_FLOAT,false,20,part.vertices)
+            part.vertices.position(3)
+            GLES20.glVertexAttribPointer(textureUvLoc,2,GLES20.GL_FLOAT,false,20,part.vertices)
+            part.vertices.position(0)
+            GLES20.glDrawArrays(GLES20.GL_TRIANGLES,0,part.vertexCount)
+        }
+        GLES20.glDisableVertexAttribArray(texturePositionLoc)
+        GLES20.glDisableVertexAttribArray(textureUvLoc)
     }
     private fun loadTexture(assetPath:String):Int{
         val bitmap=applicationContext.assets.open(assetPath).use{BitmapFactory.decodeStream(it)}
