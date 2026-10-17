@@ -26,6 +26,7 @@ internal class PatrolAudio {
     @Volatile private var speed = 0f
     @Volatile private var walking = false
     @Volatile private var impactSerial = 0
+    @Volatile private var radioChirpSerial = 0
     @Volatile private var track: AudioTrack? = null
     @Volatile private var worker: Thread? = null
 
@@ -52,6 +53,11 @@ internal class PatrolAudio {
 
     fun playImpact() {
         impactSerial++
+    }
+
+    /** Queue a short, synthesized radio acknowledgement tone without blocking the game thread. */
+    fun playRadioChirp() {
+        radioChirpSerial++
     }
 
     @Synchronized
@@ -99,6 +105,8 @@ internal class PatrolAudio {
             var footPhase = 0.0
             var lastImpactSerial = impactSerial
             var impactFramesLeft = 0
+            var lastRadioChirpSerial = radioChirpSerial
+            var radioFramesLeft = 0
             var noiseState = 0x13579BDF
 
             while (!released && !Thread.currentThread().isInterrupted) {
@@ -119,6 +127,11 @@ internal class PatrolAudio {
                 if (impactNow != lastImpactSerial) {
                     lastImpactSerial = impactNow
                     impactFramesLeft = sampleRate / 7
+                }
+                val radioNow = radioChirpSerial
+                if (radioNow != lastRadioChirpSerial) {
+                    lastRadioChirpSerial = radioNow
+                    radioFramesLeft = sampleRate / 5
                 }
 
                 for (i in pcm.indices) {
@@ -155,6 +168,21 @@ internal class PatrolAudio {
                         val noise = ((noiseState ushr 8) / 8_388_608.0) - 1.0
                         sample += noise * decay * 0.24
                         impactFramesLeft--
+                    }
+                    if (radioFramesLeft > 0) {
+                        val elapsed = sampleRate / 5 - radioFramesLeft
+                        val radioTime = elapsed.toDouble() / sampleRate
+                        val beep = when {
+                            radioTime < 0.025 -> sin(2.0 * PI * 980.0 * radioTime) * 0.09
+                            radioTime in 0.052..0.078 ->
+                                sin(2.0 * PI * 1_250.0 * (radioTime - 0.052)) * 0.075
+                            else -> 0.0
+                        }
+                        noiseState = noiseState * 1_664_525 + 1_013_904_223
+                        val noise = ((noiseState ushr 8) / 8_388_608.0) - 1.0
+                        val hissEnvelope = (1.0 - radioTime / 0.14).coerceIn(0.0, 1.0)
+                        sample += beep + noise * hissEnvelope * 0.025
+                        radioFramesLeft--
                     }
                     pcm[i] = (sample.coerceIn(-0.92, 0.92) * Short.MAX_VALUE).toInt().toShort()
                     frame++
