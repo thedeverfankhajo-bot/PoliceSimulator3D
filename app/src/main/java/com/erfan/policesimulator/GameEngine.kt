@@ -453,6 +453,17 @@ internal class GameEngine(context: Context) : GLSurfaceView.Renderer {
     private fun damagePatrolVehicle(now:Long,trafficImpact:Boolean){
         val previous=vehicleCondition
         vehicleCondition=VehicleDamageRules.applyImpact(previous,abs(speed),trafficImpact)
+        if(vehicleCondition<previous){
+            careerProfileStore.saveVehicle(
+                condition=vehicleCondition,
+                credits=credits,
+                onSaved={profile->
+                    vehicleCondition=profile.vehicleCondition
+                    credits=profile.credits
+                },
+                onError={announce("Vehicle damage could not be saved.",SystemClock.uptimeMillis())}
+            )
+        }
         if(vehicleCondition<previous&&now>=nextDamageNoticeAt){
             nextDamageNoticeAt=now+1800L
             val level=when{
