@@ -38,6 +38,7 @@ internal class GameEngine(context: Context) : GLSurfaceView.Renderer {
     @Volatile private var credits=1_000
     @Volatile private var garageRepairRequested=false
     @Volatile private var garageMessage="Garage: repair service available near the station."
+    @Volatile private var repairAnimationUntil=0L
     @Volatile private var nextDamageNoticeAt=0L
     @Volatile private var lights=false
     @Volatile private var siren=false
@@ -184,7 +185,10 @@ internal class GameEngine(context: Context) : GLSurfaceView.Renderer {
         }
         if(stage!=5 && RenderDistance.intersectsCircle(x,z,suspectX,suspectZ,1f,1.9f,VEHICLE_RENDER_DISTANCE))
             drawCar(suspectX,suspectZ,suspectAngle,rgb(activeCallout?.targetVehicleColor ?: 0x9aa5ab),false,now)
-        if(!onFoot)drawCar(patrolX,patrolZ,angle,rgb(0x1d4777),true,now) else drawOfficer(now)
+        if(!onFoot){
+            drawPatrolCar(patrolX,patrolZ,angle,now)
+            if(now<repairAnimationUntil) drawMechanic(now)
+        } else drawOfficer(now)
         if(now-lastUi>180L){lastUi=now;listener?.invoke(snapshot(),if(now<messageUntil)message else "")}
     }
     private fun update(dt:Float,now:Long){
@@ -199,6 +203,7 @@ internal class GameEngine(context: Context) : GLSurfaceView.Renderer {
                         credits=profile.credits
                         vehicleCondition=profile.vehicleCondition
                         garageMessage=result.message
+                        if(result.repaired) repairAnimationUntil=SystemClock.uptimeMillis()+2600L
                         announce(garageMessage,SystemClock.uptimeMillis())
                     },
                     onError={announce("Garage transaction failed. No repair was confirmed.",SystemClock.uptimeMillis())}
@@ -456,7 +461,6 @@ internal class GameEngine(context: Context) : GLSurfaceView.Renderer {
         if(vehicleCondition<previous){
             careerProfileStore.saveVehicle(
                 condition=vehicleCondition,
-                credits=credits,
                 onSaved={profile->
                     vehicleCondition=profile.vehicleCondition
                     credits=profile.credits
@@ -474,6 +478,49 @@ internal class GameEngine(context: Context) : GLSurfaceView.Renderer {
             }
             announce("Patrol vehicle damage: $level. Condition $vehicleCondition%.",now)
         }
+    }
+    private fun drawPatrolCar(carX:Float,carZ:Float,heading:Float,now:Long){
+        val damage=1f-vehicleCondition/100f
+        drawCar(carX,carZ,heading,rgb(0x1d4777),true,now)
+        if(damage<0.08f)return
+        // Damage is intentionally geometric and procedural: no copyrighted vehicle texture is copied.
+        val frontX=carX-sin(heading)*1.45f
+        val frontZ=carZ-cos(heading)*1.45f
+        val rearX=carX+sin(heading)*1.45f
+        val rearZ=carZ+cos(heading)*1.45f
+        val dentColor=rgb(0x343b43)
+        val scrapeColor=rgb(0xb5b8bb)
+        if(damage>=0.15f){
+            drawBox(frontX,0.47f,frontZ,0.64f,0.16f,0.12f,heading,dentColor)
+            drawBox(rearX,0.43f,rearZ,0.72f,0.12f,0.10f,heading,dentColor)
+        }
+        if(damage>=0.35f){
+            drawBox(carX-0.88f,0.52f,carZ,0.12f,0.18f,0.72f,heading,scrapeColor)
+            drawBox(carX+0.88f,0.52f,carZ,0.12f,0.18f,0.72f,heading,dentColor)
+            drawBox(frontX,0.72f,frontZ,0.44f,0.18f,0.05f,heading,rgb(0x9ca4ab))
+        }
+        if(damage>=0.65f){
+            drawBox(carX-0.43f,0.91f,carZ-0.18f,0.43f,0.06f,0.34f,heading,rgb(0x4a535a))
+            drawBox(carX+0.43f,0.91f,carZ+0.18f,0.43f,0.06f,0.34f,heading,rgb(0x4a535a))
+            // Subtle engine smoke is emitted only while the vehicle is moving and badly damaged.
+            if(abs(speed)>0.4f){
+                val pulse=0.25f+0.12f*sin(now/140.0).toFloat()
+                drawBox(frontX,1.15f+pulse,frontZ,0.34f,0.25f,0.34f,heading,rgb(0x7c858b))
+            }
+        }
+    }
+    private fun drawMechanic(now:Long){
+        val phase=((now%700L)/700f)*2f*PI.toFloat()
+        val armLift=0.22f+0.13f*sin(phase)
+        val mx=patrolX+1.65f
+        val mz=patrolZ+0.25f
+        drawBox(mx,0.72f,mz,0.34f,0.62f,0.25f,0f,rgb(0xf0a52b))
+        drawBox(mx,1.14f,mz,0.28f,0.25f,0.28f,0f,rgb(0xd8b08a))
+        drawBox(mx-0.19f,0.79f-armLift,mz-0.02f,0.11f,0.42f,0.11f,-0.45f,rgb(0xf0a52b))
+        drawBox(mx+0.19f,0.79f+armLift,mz-0.02f,0.11f,0.42f,0.11f,0.45f,rgb(0xf0a52b))
+        val pulse=0.35f+0.18f*sin(phase*2f)
+        drawBox(patrolX,0.12f,patrolZ,2.7f,0.035f,4.4f,0f,rgb(0x4ce0a0,pulse))
+        drawBox(patrolX,0.06f,patrolZ,3.2f,0.025f,4.9f,0f,rgb(0xf2cc56,0.45f))
     }
     private fun reportCollision(now:Long,onFoot:Boolean){
         if(now<nextCollisionNoticeAt)return
