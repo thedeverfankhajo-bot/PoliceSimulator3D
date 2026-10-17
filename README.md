@@ -15,7 +15,9 @@ Native Android police-patrol simulator inspired by the open-world patrol loop of
 - Grid-based suspect street routing using breadth-first search, with collision-rectangle checks to avoid blocked street segments
 - Building collision for patrol-vehicle and on-foot movement, including wall sliding, world bounds and sub-stepped movement to reduce tunnelling
 - Animated red/blue emergency lightbar, native synthesized siren/engine/impact audio, and a basic walking gait for the officer
-- Dispatch callouts, suspect stop, on-foot field contact and licence/warrant records check
+- Four rotating dispatch profiles: suspicious vehicle, reckless driving, speeding complaint, and stolen vehicle
+- Callout-specific dispatch text, approach objectives, suspect vehicle colors, warrant rules, and compliant-versus-fleeing driver responses
+- Dispatch callouts and suspect stop, on-foot field contact and licence/warrant records check
 - Explicit **ARREST** versus **CITE / WARN** decision with separate outcomes and score penalties for an unsupported decision
 - OpenGL rendering pauses and resumes with the Android activity lifecycle
 - Career XP, completed calls and decision accuracy persist locally with AndroidX DataStore
