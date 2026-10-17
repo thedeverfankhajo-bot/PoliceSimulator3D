@@ -68,6 +68,7 @@ internal class GameEngine(context: Context) : GLSurfaceView.Renderer {
     private val applicationContext = context.applicationContext
     private val careerProfileStore = CareerProfileStore(applicationContext)
     private val patrolAudio = PatrolAudio()
+    private val bundledSounds = BundledGameSounds(applicationContext)
 
     init {
         careerProfileStore.loadProfile(
@@ -123,7 +124,7 @@ internal class GameEngine(context: Context) : GLSurfaceView.Renderer {
     fun setListener(value:(GameSnapshot,String)->Unit){listener=value}
     fun resumeAudio(){patrolAudio.setActive(true)}
     fun pauseAudio(){patrolAudio.setActive(false)}
-    fun releaseAudio(){patrolAudio.release()}
+    fun releaseAudio(){patrolAudio.release();bundledSounds.release()}
     fun gas(value:Boolean){gas=value}
     fun brake(value:Boolean){brake=value}
     fun steer(value:Float){steering=value.coerceIn(-1f,1f)}
@@ -227,8 +228,8 @@ internal class GameEngine(context: Context) : GLSurfaceView.Renderer {
                 announce("Garage: processing repair quote…",now)
             }
         }
-        if(sirenToggle){sirenToggle=false;siren=!siren;lights=siren;radio=if(siren)"Dispatch: emergency equipment activated." else "Dispatch: emergency equipment off."}
-        if(headlightToggle){headlightToggle=false;headlightMode=HeadlightRules.next(headlightMode);announce("Headlights: ${headlightMode.label}",now)}
+        if(sirenToggle){sirenToggle=false;siren=!siren;lights=siren;bundledSounds.play(if(siren) "confirm" else "select",0.65f);radio=if(siren)"Dispatch: emergency equipment activated." else "Dispatch: emergency equipment off."}
+        if(headlightToggle){headlightToggle=false;headlightMode=HeadlightRules.next(headlightMode);bundledSounds.play("select",0.5f);announce("Headlights: ${headlightMode.label}",now)}
         if(vehicleToggle){vehicleToggle=false
             if(!onFoot&&abs(speed)<1.5f){onFoot=true;speed=0f;x+=cos(angle)*1.7f;z-=sin(angle)*1.7f;announce("Officer on foot.",now)}
             else if(onFoot&&distance(x,z,patrolX,patrolZ)<5f){onFoot=false;x=patrolX;z=patrolZ;announce("Back in patrol vehicle.",now)}
@@ -262,7 +263,7 @@ internal class GameEngine(context: Context) : GLSurfaceView.Renderer {
             if(movement.collided){
                 speed*=0.58f
                 damagePatrolVehicle(now,trafficImpact=false)
-                patrolAudio.playImpact()
+                patrolAudio.playImpact();bundledSounds.play(if(vehicleCondition < 35) "glass" else "metal",0.85f)
                 reportCollision(now,false)
             }
             patrolX=x;patrolZ=z
@@ -470,7 +471,7 @@ internal class GameEngine(context: Context) : GLSurfaceView.Renderer {
     private fun announce(text:String,now:Long){
         message=text
         messageUntil=now+2800L
-        patrolAudio.playRadioChirp()
+        patrolAudio.playRadioChirp();bundledSounds.play("select",0.35f)
     }
     private fun damagePatrolVehicle(now:Long,trafficImpact:Boolean){
         val previous=vehicleCondition
