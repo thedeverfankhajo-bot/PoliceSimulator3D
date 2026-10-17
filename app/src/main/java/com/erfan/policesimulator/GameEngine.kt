@@ -43,6 +43,7 @@ internal class GameEngine(context: Context) : GLSurfaceView.Renderer {
     @Volatile private var suspectX=2.5f
     @Volatile private var suspectZ=-38f
     @Volatile private var warrant=true
+    @Volatile private var pursuitActive=false
     @Volatile private var radio="Dispatch: Unit 12 ready for patrol."
     @Volatile private var objective="Accept a call, activate lights and siren, then approach the suspect."
     @Volatile private var message="Welcome, Officer. Accept the dispatch call."
@@ -179,7 +180,7 @@ internal class GameEngine(context: Context) : GLSurfaceView.Renderer {
         }
         if(nextCall){nextCall=false
             if(stage==0||stage==5){stage=1;suspectX=(kotlin.math.round(x/40f)*40f)+2.5f;suspectZ=(kotlin.math.round((z-65f)/40f)*40f)+2f
-                warrant=SystemClock.uptimeMillis()%2L==0L;objective="Activate lights and siren, then approach the highlighted vehicle."
+                pursuitActive=false;warrant=SystemClock.uptimeMillis()%2L==0L;objective="Activate lights and siren, then approach the highlighted vehicle."
                 radio="Dispatch: suspicious vehicle assigned to Unit 12.";announce("Call accepted. Locate the suspect.",now)}
             else announce("Complete the current call first.",now)
         }
@@ -268,7 +269,8 @@ internal class GameEngine(context: Context) : GLSurfaceView.Renderer {
         }
         if(stage==1){
             val suspectDistance=distance(x,z,suspectX,suspectZ)
-            val fleeing=lights&&siren&&!onFoot&&suspectDistance<=PursuitRules.START_FLEE_DISTANCE
+            if(lights&&siren&&!onFoot&&suspectDistance<=PursuitRules.START_FLEE_DISTANCE)pursuitActive=true
+            val fleeing=pursuitActive&&!onFoot
             val escape=suspectDistance>=PursuitRules.ESCAPE_DISTANCE
             if(escape){
                 stage=5
@@ -288,7 +290,7 @@ internal class GameEngine(context: Context) : GLSurfaceView.Renderer {
                 suspectZ-=5f*dt
                 if(suspectZ< -165f)suspectZ=165f
                 if(suspectDistance< PursuitRules.STOP_DISTANCE && abs(speed)<PursuitRules.STOP_PATROL_SPEED){
-                    stage=2
+                    stage=2;pursuitActive=false
                     objective="Suspect stopped. Exit the car and approach the driver."
                     radio="Dispatch: suspect stopped. Conduct a field contact."
                     announce("Vehicle stopped. Conduct a field contact.",now)
