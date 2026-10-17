@@ -20,6 +20,8 @@ private val Context.careerDataStore by preferencesDataStore(name = "police_caree
 /**
  * Persists the small career profile with DataStore. All disk work runs off the UI and GL threads.
  */
+internal data class SavedPoliceProfile(val career: CareerProgress, val vehicleCondition: Int, val credits: Int)
+
 internal class CareerProfileStore(context: Context) {
     private val dataStore: DataStore<Preferences> = context.careerDataStore
     private val ioScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
@@ -28,11 +30,63 @@ internal class CareerProfileStore(context: Context) {
     fun load(
         onLoaded: (CareerProgress) -> Unit,
         onError: () -> Unit
+    ) = loadProfile(
+        onLoaded = { onLoaded(it.career) },
+        onError = onError
+    )
+
+    fun loadProfile(
+        onLoaded: (SavedPoliceProfile) -> Unit,
+        onError: () -> Unit
     ) {
         ioScope.launch {
             try {
-                val saved = dataStore.data.first().toCareerProgress()
+                val saved = dataStore.data.first().toSavedPoliceProfile()
                 mainHandler.post { onLoaded(saved) }
+            } catch (_: IOException) {
+                mainHandler.post(onError)
+            }
+        }
+    }
+
+    fun saveVehicle(
+        condition: Int,
+        credits: Int,
+        onSaved: (SavedPoliceProfile) -> Unit,
+        onError: () -> Unit
+    ) {
+        require(condition in 0..VehicleDamageRules.MAX_CONDITION)
+        require(credits >= 0)
+        ioScope.launch {
+            try {
+                val saved = dataStore.edit { preferences ->
+                    preferences[VEHICLE_CONDITION_KEY] = condition
+                    preferences[CREDITS_KEY] = credits
+                }.toSavedPoliceProfile()
+                mainHandler.post { onSaved(saved) }
+            } catch (_: IOException) {
+                mainHandler.post(onError)
+            }
+        }
+    }
+
+    fun repairVehicle(
+        onSaved: (SavedPoliceProfile, GarageRepairResult) -> Unit,
+        onError: () -> Unit
+    ) {
+        ioScope.launch {
+            try {
+                var result: GarageRepairResult? = null
+                val saved = dataStore.edit { preferences ->
+                    val condition = preferences[VEHICLE_CONDITION_KEY] ?: VehicleDamageRules.MAX_CONDITION
+                    val credits = preferences[CREDITS_KEY] ?: DEFAULT_CREDITS
+                    result = VehicleGarageRules.repair(condition, credits)
+                    if (result!!.repaired) {
+                        preferences[VEHICLE_CONDITION_KEY] = result!!.vehicleCondition
+                        preferences[CREDITS_KEY] = result!!.credits
+                    }
+                }.toSavedPoliceProfile()
+                mainHandler.post { onSaved(saved, result!!) }
             } catch (_: IOException) {
                 mainHandler.post(onError)
             }
@@ -68,7 +122,16 @@ internal class CareerProfileStore(context: Context) {
         incorrectDecisions = this[INCORRECT_KEY] ?: 0
     )
 
+    private fun Preferences.toSavedPoliceProfile() = SavedPoliceProfile(
+        career = toCareerProgress(),
+        vehicleCondition = this[VEHICLE_CONDITION_KEY] ?: VehicleDamageRules.MAX_CONDITION,
+        credits = this[CREDITS_KEY] ?: DEFAULT_CREDITS
+    )
+
     private companion object {
+        const val DEFAULT_CREDITS = 1_000
+        val VEHICLE_CONDITION_KEY = intPreferencesKey("vehicle_condition")
+        val CREDITS_KEY = intPreferencesKey("garage_credits")
         val XP_KEY = intPreferencesKey("career_xp")
         val CALLS_KEY = intPreferencesKey("calls_completed")
         val CORRECT_KEY = intPreferencesKey("correct_decisions")
