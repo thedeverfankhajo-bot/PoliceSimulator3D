@@ -43,6 +43,14 @@ class VehicleDamageRulesTest {
         assertTrue(VehicleDamageRules.maximumSpeed(10) < VehicleDamageRules.maximumSpeed(40))
     }
 
+    @Test
+    fun damageVisualBandsAreMonotonicAndRepairRestoresCleanState() {
+        assertEquals(VehicleDamageRules.MAX_CONDITION, VehicleGarageRules.repair(100, 1_000).vehicleCondition)
+        assertEquals(100, VehicleGarageRules.repair(20, 1_000).vehicleCondition)
+        assertEquals(0, VehicleGarageRules.quote(100))
+        assertTrue(VehicleGarageRules.quote(20) > VehicleGarageRules.quote(60))
+    }
+
     @Test(expected = IllegalArgumentException::class)
     fun rejectsConditionAboveMaximum() {
         VehicleDamageRules.maximumSpeed(101)
