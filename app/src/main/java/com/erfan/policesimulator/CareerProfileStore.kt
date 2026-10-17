@@ -51,17 +51,16 @@ internal class CareerProfileStore(context: Context) {
 
     fun saveVehicle(
         condition: Int,
-        credits: Int,
         onSaved: (SavedPoliceProfile) -> Unit,
         onError: () -> Unit
     ) {
         require(condition in 0..VehicleDamageRules.MAX_CONDITION)
-        require(credits >= 0)
         ioScope.launch {
             try {
                 val saved = dataStore.edit { preferences ->
+                    // Damage events update only vehicle condition. Never rewrite the credit balance
+                    // from a possibly stale renderer snapshot over a concurrent garage transaction.
                     preferences[VEHICLE_CONDITION_KEY] = condition
-                    preferences[CREDITS_KEY] = credits
                 }.toSavedPoliceProfile()
                 mainHandler.post { onSaved(saved) }
             } catch (_: IOException) {
