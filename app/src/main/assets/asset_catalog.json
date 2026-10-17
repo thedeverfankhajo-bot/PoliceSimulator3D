@@ -1,7 +1,7 @@
 {
   "formatVersion": 1,
   "license": "CC0-1.0",
-  "notes": "Bundled external assets are licensed for reuse. GLB files and new OGG clips are packaged but are not yet connected to the custom OpenGL ES/audio runtime.",
+  "notes": "CC0 assets are bundled in the Android app. Static Kenney police, sedan, and SUV GLB meshes are now loaded by the custom OpenGL ES renderer with a safe white fallback material; GLB texture-atlas images and city GLB meshes are not yet connected. Kenney OGG clips are bundled and selected UI/interaction sounds are connected through SoundPool; siren and engine audio remain synthesized by the app.",
   "models": [
     "models/kenney/cars/police.glb",
     "models/kenney/cars/sedan.glb",
