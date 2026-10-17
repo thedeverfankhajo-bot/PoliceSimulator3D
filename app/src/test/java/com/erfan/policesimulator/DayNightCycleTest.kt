@@ -41,7 +41,7 @@ class DayNightCycleTest {
     @Test
     fun clockWrapsAcrossMidnight() {
         val advanced = DayNightCycle.advance(86_390f, 1f)
-        assertTrue(advanced in 0f until DayNightCycle.GAME_DAY_SECONDS)
+        assertTrue(advanced >= 0f && advanced < DayNightCycle.GAME_DAY_SECONDS)
         assertEquals("00:01", DayNightCycle.at(advanced).clockText)
     }
 
