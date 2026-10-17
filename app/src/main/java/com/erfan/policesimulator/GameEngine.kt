@@ -17,7 +17,7 @@ import kotlin.math.min
 import kotlin.math.sin
 import kotlin.math.sqrt
 
-data class GameSnapshot(val speed: Int, val lights: Boolean, val siren: Boolean, val onFoot: Boolean, val mission: String, val objective: String, val distance: Int, val score: Int, val radio: String, val decisionRequired: Boolean)
+data class GameSnapshot(val speed: Int, val lights: Boolean, val siren: Boolean, val onFoot: Boolean, val mission: String, val objective: String, val distance: Int, val score: Int, val radio: String, val decisionRequired: Boolean, val career: CareerProgress)
 
 class GameEngine(context: Context) : GLSurfaceView.Renderer {
     @Volatile private var gas=false
@@ -36,7 +36,8 @@ class GameEngine(context: Context) : GLSurfaceView.Renderer {
     @Volatile private var siren=false
     @Volatile private var onFoot=false
     @Volatile private var stage=0
-    @Volatile private var score=0
+    @Volatile private var career = CareerProgress()
+    @Volatile private var careerUpdated = false
     @Volatile private var suspectX=2.5f
     @Volatile private var suspectZ=-38f
     @Volatile private var warrant=true
@@ -45,6 +46,18 @@ class GameEngine(context: Context) : GLSurfaceView.Renderer {
     @Volatile private var message="Welcome, Officer. Accept the dispatch call."
     @Volatile private var messageUntil=SystemClock.uptimeMillis()+4000L
     @Volatile private var listener: ((GameSnapshot,String)->Unit)?=null
+    private val careerProfileStore = CareerProfileStore(context.applicationContext)
+
+    init {
+        careerProfileStore.load(
+            onLoaded = { savedProfile ->
+                if (!careerUpdated) career = savedProfile
+            },
+            onError = {
+                announce("Career profile could not be loaded.", SystemClock.uptimeMillis())
+            }
+        )
+    }
     private var patrolX=0f
     private var patrolZ=12f
     private var lastFrame=0L
@@ -77,7 +90,7 @@ class GameEngine(context: Context) : GLSurfaceView.Renderer {
     fun toggleSiren(){sirenToggle=true}
     fun chooseArrest(){arrestDecision=1}
     fun chooseCitation(){arrestDecision=-1}
-    fun snapshot()=GameSnapshot((abs(speed)*3.6f).toInt(),lights,siren,onFoot,missionName(),objective,distance(x,z,suspectX,suspectZ).toInt(),score,radio,stage==4)
+    fun snapshot()=GameSnapshot((abs(speed)*3.6f).toInt(),lights,siren,onFoot,missionName(),objective,distance(x,z,suspectX,suspectZ).toInt(),career.xp,radio,stage==4,career)
 
     override fun onSurfaceCreated(gl:GL10?,config:EGLConfig?){
         GLES20.glClearColor(0.43f,0.66f,0.79f,1f);GLES20.glEnable(GLES20.GL_DEPTH_TEST)
@@ -148,7 +161,12 @@ class GameEngine(context: Context) : GLSurfaceView.Renderer {
         if(stage!=4){announce("Check the driver's records before choosing an outcome.",now);return}
         val action=if(arrest) IncidentAction.ARREST else IncidentAction.CITE_OR_WARN
         val outcome=IncidentRules.resolve(warrant,action)
-        score=(score+outcome.scoreDelta).coerceAtLeast(0)
+        careerUpdated = true
+        careerProfileStore.recordDecision(
+            outcome = outcome,
+            onSaved = { savedProfile -> career = savedProfile },
+            onError = { announce("Career save failed. Check available storage.", SystemClock.uptimeMillis()) }
+        )
         stage=5
         lights=false
         siren=false

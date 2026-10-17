@@ -17,6 +17,7 @@ class MainActivity : Activity() {
     private lateinit var game: GameEngine
     private lateinit var speed: TextView
     private lateinit var status: TextView
+    private lateinit var careerStatus: TextView
     private lateinit var objective: TextView
     private lateinit var radio: TextView
     private lateinit var sirenButton: Button
@@ -41,6 +42,7 @@ class MainActivity : Activity() {
         info.addView(label("POLICE SIMULATOR 3D • UNIT 12", 15f, true))
         speed = label("0 KM/H", 22f, true); info.addView(speed)
         status = label("DISPATCH AVAILABLE", 12f, true); info.addView(status)
+        careerStatus = label("CAREER: LOADING PROFILE…", 11f, false); info.addView(careerStatus)
         top.addView(info, LinearLayout.LayoutParams(0, -2, 1f))
         val mission = panel()
         objective = label("Accept the dispatch call to begin.", 13f, true); mission.addView(objective)
@@ -74,6 +76,7 @@ class MainActivity : Activity() {
         game.setListener { s, msg -> runOnUiThread {
             speed.text = s.speed.toString() + " KM/H"
             status.text = s.mission + if (s.onFoot) " • ON FOOT" else " • IN VEHICLE"
+            careerStatus.text = "CAREER: ${s.career.xp} XP • CALLS: ${s.career.callsCompleted} • CORRECT: ${s.career.correctDecisions}/${s.career.callsCompleted}"
             objective.text = s.objective
             radio.text = if (msg.isNotBlank()) msg else s.radio
             sirenButton.text = if (s.lights && s.siren) "LIGHTS: ON" else "LIGHTS / SIREN"
