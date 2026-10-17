@@ -24,6 +24,7 @@ class MainActivity : Activity() {
     private lateinit var sirenButton: Button
     private lateinit var vehicleButton: Button
     private lateinit var callButton: Button
+    private lateinit var garageButton: Button
     private lateinit var interactionButton: Button
     private lateinit var glView: GLSurfaceView
 
@@ -69,15 +70,17 @@ class MainActivity : Activity() {
             if (game.snapshot().decisionRequired) game.chooseArrest() else game.interact()
         }
         callButton = button("NEW CALL") { game.requestCall() }
+        garageButton = button("GARAGE") { game.requestGarageRepair() }
         actions.addView(sirenButton, weight())
         actions.addView(vehicleButton, weight())
         actions.addView(interactionButton, weight())
         actions.addView(callButton, weight())
+        actions.addView(garageButton, weight())
         controls.addView(actions, LinearLayout.LayoutParams(0, -2, 2.3f))
         root.addView(controls, FrameLayout.LayoutParams(-1, -2, Gravity.BOTTOM))
         game.setListener { s, msg -> runOnUiThread {
             speed.text = s.speed.toString() + " KM/H"
-            vehicleHealth.text = "VEHICLE CONDITION: ${s.vehicleCondition}%"
+            vehicleHealth.text = "VEHICLE: ${s.vehicleCondition}% • CREDITS: ${s.credits}"
             vehicleHealth.setTextColor(when {
                 s.vehicleCondition < 25 -> Color.rgb(255, 92, 72)
                 s.vehicleCondition < 50 -> Color.rgb(255, 177, 66)
@@ -95,6 +98,8 @@ class MainActivity : Activity() {
             }
             interactionButton.text = if (s.decisionRequired) "ARREST" else "INTERACT"
             callButton.text = if (s.score > 0) "NEW CALL • " + s.score + " XP" else "NEW CALL"
+            garageButton.text = if (s.garageDistance <= 7 && !s.onFoot && s.speed == 0) "REPAIR • ${(100 - s.vehicleCondition) * 5} CR" else "GARAGE • ${s.garageDistance} M"
+            garageButton.isEnabled = s.garageDistance <= 7 && !s.onFoot && s.speed == 0
         } }
         setContentView(root)
     }
