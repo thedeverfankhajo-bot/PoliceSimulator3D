@@ -25,6 +25,7 @@ class MainActivity : Activity() {
     private lateinit var vehicleButton: Button
     private lateinit var callButton: Button
     private lateinit var garageButton: Button
+    private lateinit var headlightButton: Button
     private lateinit var interactionButton: Button
     private lateinit var glView: GLSurfaceView
 
@@ -72,11 +73,13 @@ class MainActivity : Activity() {
         }
         callButton = button("NEW CALL") { game.requestCall() }
         garageButton = button("GARAGE") { game.requestGarageRepair() }
+        headlightButton = button("HEADLIGHTS • AUTO") { game.toggleHeadlights() }
         actions.addView(sirenButton, weight())
         actions.addView(vehicleButton, weight())
         actions.addView(interactionButton, weight())
         actions.addView(callButton, weight())
         actions.addView(garageButton, weight())
+        actions.addView(headlightButton, weight())
         controls.addView(actions, LinearLayout.LayoutParams(0, -2, 2.3f))
         root.addView(controls, FrameLayout.LayoutParams(-1, -2, Gravity.BOTTOM))
         game.setListener { s, msg -> runOnUiThread {
@@ -107,6 +110,10 @@ class MainActivity : Activity() {
             callButton.text = if (s.score > 0) "NEW CALL • " + s.score + " XP" else "NEW CALL"
             garageButton.text = if (s.garageDistance <= 7 && !s.onFoot && s.speed == 0) "REPAIR • ${(100 - s.vehicleCondition) * 5} CR" else "GARAGE • ${s.garageDistance} M"
             garageButton.isEnabled = s.garageDistance <= 7 && !s.onFoot && s.speed == 0
+            headlightButton.text = when {
+                s.worldPhase == "NIGHT" -> "HEADLIGHTS • AUTO/NIGHT"
+                else -> "HEADLIGHTS • AUTO"
+            }
         } }
         setContentView(root)
     }
