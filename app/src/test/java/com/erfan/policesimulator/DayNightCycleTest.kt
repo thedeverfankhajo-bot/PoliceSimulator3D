@@ -45,6 +45,25 @@ class DayNightCycleTest {
         assertEquals("00:01", DayNightCycle.at(advanced).clockText)
     }
 
+    @Test
+    fun nightStreetLightingAndWorldBrightnessStayWithinValidRange() {
+        val midnight = DayNightCycle.at(0f)
+        val evening = DayNightCycle.at(20f * 3_600f)
+        val afternoon = DayNightCycle.at(14f * 3_600f)
+        assertTrue(midnight.streetLightsOn)
+        assertTrue(evening.streetLightsOn)
+        assertFalse(afternoon.streetLightsOn)
+        assertTrue(midnight.sceneBrightness in 0f..1f)
+        assertTrue(afternoon.sceneBrightness in 0f..1f)
+        assertTrue(midnight.sceneBrightness < afternoon.sceneBrightness)
+    }
+
+    @Test
+    fun timeAdvancesAtExpectedGameRate() {
+        val afterOneSecond = DayNightCycle.advance(8f * 3_600f, 1f)
+        assertEquals(8f * 3_600f + 90f, afterOneSecond, 0.01f)
+    }
+
     @Test(expected = IllegalArgumentException::class)
     fun rejectsNegativeDelta() {
         DayNightCycle.advance(0f, -1f)
