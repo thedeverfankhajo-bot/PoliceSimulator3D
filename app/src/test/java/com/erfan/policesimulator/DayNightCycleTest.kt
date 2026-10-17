@@ -1,0 +1,52 @@
+package com.erfan.policesimulator
+
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotEquals
+import org.junit.Assert.assertTrue
+import org.junit.Test
+
+class DayNightCycleTest {
+    @Test
+    fun startsWithExpectedClockAndDayPhase() {
+        val state = DayNightCycle.at(8f * 3_600f)
+        assertEquals("08:00", state.clockText)
+        assertEquals(DayPhase.DAY, state.phase)
+        assertEquals(1f, state.daylight, 0.001f)
+        assertFalse(state.streetLightsOn)
+    }
+
+    @Test
+    fun streetLightsTurnOnAfterSunsetAndOffAfterSunrise() {
+        assertTrue(DayNightCycle.at(19f * 3_600f).streetLightsOn)
+        assertTrue(DayNightCycle.at(2f * 3_600f).streetLightsOn)
+        assertFalse(DayNightCycle.at(8f * 3_600f).streetLightsOn)
+    }
+
+    @Test
+    fun nightSkyIsDarkerThanNoonSky() {
+        val night = DayNightCycle.at(0f)
+        val noon = DayNightCycle.at(12f * 3_600f)
+        assertTrue(night.sceneBrightness < noon.sceneBrightness)
+        assertNotEquals(night.skyBlue, noon.skyBlue)
+    }
+
+    @Test
+    fun sunriseAndSunsetHaveTransitionPhases() {
+        assertEquals(DayPhase.DAWN, DayNightCycle.at(6f * 3_600f).phase)
+        assertEquals(DayPhase.DUSK, DayNightCycle.at(18f * 3_600f).phase)
+        assertTrue(DayNightCycle.at(6f * 3_600f).daylight in 0f..1f)
+    }
+
+    @Test
+    fun clockWrapsAcrossMidnight() {
+        val advanced = DayNightCycle.advance(86_390f, 1f)
+        assertTrue(advanced in 0f until DayNightCycle.GAME_DAY_SECONDS)
+        assertEquals("00:01", DayNightCycle.at(advanced).clockText)
+    }
+
+    @Test(expected = IllegalArgumentException::class)
+    fun rejectsNegativeDelta() {
+        DayNightCycle.advance(0f, -1f)
+    }
+}
