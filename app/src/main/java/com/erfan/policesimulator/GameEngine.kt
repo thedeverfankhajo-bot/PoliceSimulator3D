@@ -266,8 +266,39 @@ internal class GameEngine(context: Context) : GLSurfaceView.Renderer {
             patrolAudio.playImpact()
             reportCollision(now, onFoot)
         }
-        if(stage==1){if(lights&&siren&&distance(x,z,suspectX,suspectZ)<22f){stage=2;objective="Stop safely, exit the car and approach the driver.";radio="Dispatch: suspect stopped. Conduct a field contact.";announce("Vehicle stopped. Conduct a field contact.",now)}
-            else{suspectZ-=5f*dt;if(suspectZ< -165f)suspectZ=165f}}
+        if(stage==1){
+            val suspectDistance=distance(x,z,suspectX,suspectZ)
+            val fleeing=lights&&siren&&!onFoot&&suspectDistance<=PursuitRules.START_FLEE_DISTANCE
+            val escape=suspectDistance>=PursuitRules.ESCAPE_DISTANCE
+            if(escape){
+                stage=5
+                objective="Suspect escaped. Request a new call when ready."
+                radio="Dispatch: suspect lost. Unit 12, return to patrol."
+                announce("Suspect escaped. Call closed.",now)
+            }else if(fleeing){
+                val targetSpeed=PursuitRules.FLEE_SPEED_FACTOR*8f
+                val step=min(targetSpeed*dt,max(0f,suspectDistance-0.1f))
+                val horizontal=abs(x-suspectX)>abs(z-suspectZ)
+                if(horizontal){suspectX+=if(suspectX<x) -step else step}
+                else{suspectZ+=if(suspectZ<z) -step else step}
+                objective="Pursuit active. Follow the suspect and close the distance."
+                radio="Dispatch: vehicle pursuit active. Requesting backup."
+            }else if(!lights||!siren){
+                val decision=PursuitRules.update(PursuitState.SUSPICIOUS,suspectDistance,false,abs(speed),dt)
+                suspectZ-=5f*dt
+                if(suspectZ< -165f)suspectZ=165f
+                if(suspectDistance< PursuitRules.STOP_DISTANCE && abs(speed)<PursuitRules.STOP_PATROL_SPEED){
+                    stage=2
+                    objective="Suspect stopped. Exit the car and approach the driver."
+                    radio="Dispatch: suspect stopped. Conduct a field contact."
+                    announce("Vehicle stopped. Conduct a field contact.",now)
+                }else if(decision.escaped){
+                    stage=5;objective="Suspect escaped. Request a new call when ready."
+                }
+            }else{
+                objective="Approach the suspect vehicle and close the distance."
+            }
+        }
         patrolAudio.update(speed,siren,onFoot&&(gas||brake))
         if(interact){interact=false;handleInteraction(now)}
     }
