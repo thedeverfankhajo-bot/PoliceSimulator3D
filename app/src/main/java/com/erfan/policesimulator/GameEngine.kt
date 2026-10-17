@@ -75,6 +75,8 @@ internal class GameEngine(context: Context) : GLSurfaceView.Renderer {
     private val mvp=FloatArray(16)
     private val boxes=ArrayList<Box>()
     private val traffic=ArrayList<Car>()
+    private val buildingColliders=ArrayList<CollisionRect>()
+    private var nextCollisionNoticeAt=0L
     private var viewportWidth=1
     private var viewportHeight=1
     private data class Box(val x:Float,val y:Float,val z:Float,val sx:Float,val sy:Float,val sz:Float,val color:FloatArray)
@@ -137,8 +139,17 @@ internal class GameEngine(context: Context) : GLSurfaceView.Renderer {
         }
         if(!onFoot){if(gas)speed+=12f*dt else if(brake)speed-=19f*dt else speed*=max(0f,1f-0.8f*dt)
             speed=speed.coerceIn(-6f,30f);angle+=steering*dt*(0.3f+min(abs(speed)/12f,1f))*if(speed>=0f)1f else -1f
-            x+=-sin(angle)*speed*dt;z+=-cos(angle)*speed*dt;x=x.coerceIn(-155f,155f);z=z.coerceIn(-155f,155f);patrolX=x;patrolZ=z
-        }else{angle+=steering*dt*1.8f;val move=if(gas)1f else if(brake)-1f else 0f;x+=-sin(angle)*move*4f*dt;z+=-cos(angle)*move*4f*dt}
+            val movement=WorldCollision.move(x,z,-sin(angle)*speed*dt,-cos(angle)*speed*dt,1.55f,buildingColliders)
+            x=movement.x;z=movement.z
+            if(movement.collided){speed*=0.58f;reportCollision(now,false)}
+            patrolX=x;patrolZ=z
+        }else{
+            angle+=steering*dt*1.8f
+            val move=if(gas)1f else if(brake)-1f else 0f
+            val movement=WorldCollision.move(x,z,-sin(angle)*move*4f*dt,-cos(angle)*move*4f*dt,0.42f,buildingColliders)
+            x=movement.x;z=movement.z
+            if(movement.collided&&move!=0f)reportCollision(now,true)
+        }
         traffic.forEach{c->if(c.verticalRoad){c.z+=-cos(c.angle)*c.speed*dt;if(c.z< -165f)c.z=165f;if(c.z>165f)c.z= -165f}else{c.x+=-sin(c.angle)*c.speed*dt;if(c.x< -165f)c.x=165f;if(c.x>165f)c.x= -165f}}
         if(stage==1){if(lights&&siren&&distance(x,z,suspectX,suspectZ)<22f){stage=2;objective="Stop safely, exit the car and approach the driver.";radio="Dispatch: suspect stopped. Conduct a field contact.";announce("Vehicle stopped. Conduct a field contact.",now)}
             else{suspectZ-=5f*dt;if(suspectZ< -165f)suspectZ=165f}}
@@ -176,13 +187,19 @@ internal class GameEngine(context: Context) : GLSurfaceView.Renderer {
     }
     private fun missionName()=when(stage){0->"Dispatch available";1->"En route: vehicle stop";2->"Suspect stopped";3->"Field contact";4->"Records checked";else->"Call complete"}
     private fun announce(text:String,now:Long){message=text;messageUntil=now+2800L}
+    private fun reportCollision(now:Long,onFoot:Boolean){
+        if(now<nextCollisionNoticeAt)return
+        nextCollisionNoticeAt=now+1500L
+        announce(if(onFoot)"A building blocks your path." else "Impact detected. Patrol vehicle slowed.",now)
+    }
     private fun distance(ax:Float,az:Float,bx:Float,bz:Float):Float{val dx=ax-bx;val dz=az-bz;return kotlin.math.sqrt(dx*dx+dz*dz)}
     private fun buildCity(){
-        boxes.clear();boxes.add(Box(0f,-0.3f,0f,360f,0.5f,360f,rgb(0x626a63)));val roads=(-3..3).map{it*40f}
+        boxes.clear();buildingColliders.clear();boxes.add(Box(0f,-0.3f,0f,360f,0.5f,360f,rgb(0x626a63)));val roads=(-3..3).map{it*40f}
         roads.forEach{rx->boxes.add(Box(rx,0f,0f,12f,0.08f,340f,rgb(0x30383e)));boxes.add(Box(rx-6.2f,0.08f,0f,0.8f,0.16f,340f,rgb(0x929898)));boxes.add(Box(rx+6.2f,0.08f,0f,0.8f,0.16f,340f,rgb(0x929898)));for(rz in -160..160 step 20)boxes.add(Box(rx,0.06f,rz.toFloat(),0.13f,0.02f,4f,rgb(0xe8c967)))}
         roads.forEach{rz->boxes.add(Box(0f,0f,rz,340f,0.08f,12f,rgb(0x30383e)));boxes.add(Box(0f,0.08f,rz-6.2f,340f,0.16f,0.8f,rgb(0x929898)));boxes.add(Box(0f,0.08f,rz+6.2f,340f,0.16f,0.8f,rgb(0x929898)))}
         val colors=intArrayOf(0x626e79,0x737e83,0x817b71,0x586a76,0x777f76);var i=0
-        for(gx in -100..100 step 40)for(gz in -100..100 step 40){val bx=gx+(i%7-3)*1.1f;val bz=gz+(i%5-2)*1.2f;val w=10f+(i%4)*1.7f;val d=10f+(i%3)*2f;val h=9f+(i%6)*3.2f
+        for(gx in -100..100 step 40)for(gz in -100..100 step 40){val bx=gx+(if((i/6)%2==0)12f else -12f)+(i%7-3)*0.35f;val bz=gz+(if(i%2==0)12f else -12f)+(i%5-2)*0.4f;val w=10f+(i%4)*1.7f;val d=10f+(i%3)*2f;val h=9f+(i%6)*3.2f
+            buildingColliders.add(CollisionRect(bx,bz,w/2f,d/2f))
             boxes.add(Box(bx,h/2f,bz,w,h,d,rgb(colors[i++%colors.size])));boxes.add(Box(bx,h+0.1f,bz,w+0.2f,0.2f,d+0.2f,rgb(0x3f4c55)))
             for(row in 0..3)for(col in -1..1){val wy=1.6f+row*(h-2f)/4f;boxes.add(Box(bx+col*w*0.27f,wy,bz-d/2f-0.03f,w*0.11f,0.72f,0.05f,rgb(0x8bb6c1)));boxes.add(Box(bx+col*w*0.27f,wy,bz+d/2f+0.03f,w*0.11f,0.72f,0.05f,rgb(0x8bb6c1)))}
         }

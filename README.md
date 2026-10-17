@@ -9,13 +9,14 @@ Native Android police-patrol simulator inspired by the open-world patrol loop of
 - OpenGL ES 2.0 via Android `GLSurfaceView` and `GLSurfaceView.Renderer`
 - Procedurally generated low-poly city blocks, roads, windows, streetlights, traffic and patrol/suspect vehicles
 - Third-person patrol driving with touch controls for steering, acceleration and braking
+- Building collision for patrol-vehicle and on-foot movement, including wall sliding, world bounds and sub-stepped movement to reduce tunnelling
 - Emergency lightbar toggle, dispatch callouts, suspect stop, on-foot field contact and licence/warrant records check
 - Explicit **ARREST** versus **CITE / WARN** decision with separate outcomes and score penalties for an unsupported decision
 - OpenGL rendering pauses and resumes with the Android activity lifecycle
 - Career XP, completed calls and decision accuracy persist locally with AndroidX DataStore
 - Landscape full-screen layout; offline-first, no analytics or account requirement
 
-This is an early playable foundation, not feature parity with LSPDFR or a commercial open-world game. The current world uses procedural low-poly geometry rather than external game assets. Vehicle collision physics, realistic pedestrian AI, pursuit behavior, audio and map navigation remain future work. Career persistence is local to the device and is not synced to a server.
+This is an early playable foundation, not feature parity with LSPDFR or a commercial open-world game. The current world uses procedural low-poly geometry rather than external game assets. Vehicle-to-vehicle collision physics, realistic pedestrian AI, pursuit behavior, audio and map navigation remain future work. Career persistence is local to the device and is not synced to a server.
 
 ## Build the Android app
 
@@ -25,7 +26,7 @@ Requirements: JDK 17, Android SDK Platform 36, and Gradle 8.13.
 gradle --no-daemon :app:testDebugUnitTest :app:lintDebug :app:assembleDebug
 ```
 
-The app compiles and targets Android 16 (API 36). The debug APK is produced at `app/build/outputs/apk/debug/app-debug.apk`. GitHub Actions runs local unit tests, Android Lint and the debug APK build on pushes and pull requests targeting `main`, then uploads the APK as a workflow artifact. The incident decision rules are pure Kotlin and covered by unit tests; device-level graphics and gameplay still need manual testing on Android hardware.
+The app compiles and targets Android 16 (API 36). The debug APK is produced at `app/build/outputs/apk/debug/app-debug.apk`. GitHub Actions runs local unit tests, Android Lint and the debug APK build on pushes and pull requests targeting `main`, then uploads the APK as a workflow artifact. Incident decisions, career progression, and the world collision solver are pure Kotlin rules covered by unit tests; device-level graphics and gameplay still need manual testing on Android hardware.
 
 ## Controls
 
