@@ -17,9 +17,9 @@ import kotlin.math.min
 import kotlin.math.sin
 import kotlin.math.sqrt
 
-data class GameSnapshot(val speed: Int, val lights: Boolean, val siren: Boolean, val onFoot: Boolean, val mission: String, val objective: String, val distance: Int, val score: Int, val radio: String, val decisionRequired: Boolean, val career: CareerProgress)
+internal data class GameSnapshot(val speed: Int, val lights: Boolean, val siren: Boolean, val onFoot: Boolean, val mission: String, val objective: String, val distance: Int, val score: Int, val radio: String, val decisionRequired: Boolean, val career: CareerProgress)
 
-class GameEngine(context: Context) : GLSurfaceView.Renderer {
+internal class GameEngine(context: Context) : GLSurfaceView.Renderer {
     @Volatile private var gas=false
     @Volatile private var brake=false
     @Volatile private var steering=0f

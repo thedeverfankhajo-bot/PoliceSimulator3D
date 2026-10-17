@@ -19,13 +19,13 @@ This is an early playable foundation, not feature parity with LSPDFR or a commer
 
 ## Build the Android app
 
-Requirements: JDK 17, Android SDK Platform 35, and Gradle 8.13.
+Requirements: JDK 17, Android SDK Platform 36, and Gradle 8.13.
 
 ```bash
 gradle --no-daemon :app:testDebugUnitTest :app:lintDebug :app:assembleDebug
 ```
 
-The debug APK is produced at `app/build/outputs/apk/debug/app-debug.apk`. GitHub Actions runs local unit tests, Android Lint and the debug APK build on pushes and pull requests targeting `main`, then uploads the APK as a workflow artifact. The incident decision rules are pure Kotlin and covered by unit tests; device-level graphics and gameplay still need manual testing on Android hardware.
+The app compiles and targets Android 16 (API 36). The debug APK is produced at `app/build/outputs/apk/debug/app-debug.apk`. GitHub Actions runs local unit tests, Android Lint and the debug APK build on pushes and pull requests targeting `main`, then uploads the APK as a workflow artifact. The incident decision rules are pure Kotlin and covered by unit tests; device-level graphics and gameplay still need manual testing on Android hardware.
 
 ## Controls
 
