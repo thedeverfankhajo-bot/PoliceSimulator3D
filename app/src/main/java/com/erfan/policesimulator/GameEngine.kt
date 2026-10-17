@@ -172,7 +172,7 @@ internal class GameEngine(context: Context) : GLSurfaceView.Renderer {
                 drawCar(carX,carZ,c.angle,c.color,false,now)
         }
         if(stage!=5 && RenderDistance.intersectsCircle(x,z,suspectX,suspectZ,1f,1.9f,VEHICLE_RENDER_DISTANCE))
-            drawCar(suspectX,suspectZ,suspectAngle,rgb(0x9aa5ab),false,now)
+            drawCar(suspectX,suspectZ,suspectAngle,rgb(activeCallout?.targetVehicleColor ?: 0x9aa5ab),false,now)
         if(!onFoot)drawCar(patrolX,patrolZ,angle,rgb(0x1d4777),true,now) else drawOfficer(now)
         if(now-lastUi>180L){lastUi=now;listener?.invoke(snapshot(),if(now<messageUntil)message else "")}
     }
