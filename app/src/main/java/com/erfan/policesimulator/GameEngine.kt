@@ -20,7 +20,7 @@ import kotlin.math.PI
 import kotlin.math.sin
 import kotlin.math.sqrt
 
-internal data class GameSnapshot(val speed: Int, val lights: Boolean, val siren: Boolean, val onFoot: Boolean, val mission: String, val objective: String, val distance: Int, val score: Int, val radio: String, val decisionRequired: Boolean, val career: CareerProgress, val vehicleCondition: Int, val credits: Int, val garageDistance: Int, val worldClock: String, val worldPhase: String)
+internal data class GameSnapshot(val speed: Int, val lights: Boolean, val siren: Boolean, val onFoot: Boolean, val mission: String, val objective: String, val distance: Int, val score: Int, val radio: String, val decisionRequired: Boolean, val career: CareerProgress, val vehicleCondition: Int, val credits: Int, val garageDistance: Int, val worldClock: String, val worldPhase: String, val headlightMode: String)
 
 internal class GameEngine(context: Context) : GLSurfaceView.Renderer {
     @Volatile private var gas=false
@@ -135,7 +135,7 @@ internal class GameEngine(context: Context) : GLSurfaceView.Renderer {
     fun toggleHeadlights(){headlightToggle=true}
     fun chooseArrest(){arrestDecision=1}
     fun chooseCitation(){arrestDecision=-1}
-    fun snapshot()=GameSnapshot((abs(speed)*3.6f).toInt(),lights,siren,onFoot,missionName(),objective,distance(x,z,suspectX,suspectZ).toInt(),career.xp,radio,stage==4,career,vehicleCondition,credits,distance(x,z,GARAGE_X,GARAGE_Z).toInt(),worldLighting.clockText,worldLighting.phase.displayName)
+    fun snapshot()=GameSnapshot((abs(speed)*3.6f).toInt(),lights,siren,onFoot,missionName(),objective,distance(x,z,suspectX,suspectZ).toInt(),career.xp,radio,stage==4,career,vehicleCondition,credits,distance(x,z,GARAGE_X,GARAGE_Z).toInt(),worldLighting.clockText,worldLighting.phase.displayName,headlightMode.label)
 
     override fun onSurfaceCreated(gl:GL10?,config:EGLConfig?){
         GLES20.glClearColor(0.43f,0.66f,0.79f,1f);GLES20.glEnable(GLES20.GL_DEPTH_TEST)
