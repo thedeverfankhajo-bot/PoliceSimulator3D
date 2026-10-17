@@ -19,7 +19,7 @@ import kotlin.math.min
 import kotlin.math.sin
 import kotlin.math.sqrt
 
-internal data class GameSnapshot(val speed: Int, val lights: Boolean, val siren: Boolean, val onFoot: Boolean, val mission: String, val objective: String, val distance: Int, val score: Int, val radio: String, val decisionRequired: Boolean, val career: CareerProgress, val vehicleCondition: Int)
+internal data class GameSnapshot(val speed: Int, val lights: Boolean, val siren: Boolean, val onFoot: Boolean, val mission: String, val objective: String, val distance: Int, val score: Int, val radio: String, val decisionRequired: Boolean, val career: CareerProgress, val vehicleCondition: Int, val credits: Int, val garageDistance: Int)
 
 internal class GameEngine(context: Context) : GLSurfaceView.Renderer {
     @Volatile private var gas=false
@@ -35,6 +35,9 @@ internal class GameEngine(context: Context) : GLSurfaceView.Renderer {
     @Volatile private var angle=0f
     @Volatile private var speed=0f
     @Volatile private var vehicleCondition=VehicleDamageRules.MAX_CONDITION
+    @Volatile private var credits=1_000
+    @Volatile private var garageRepairRequested=false
+    @Volatile private var garageMessage="Garage: repair service available near the station."
     @Volatile private var nextDamageNoticeAt=0L
     @Volatile private var lights=false
     @Volatile private var siren=false
@@ -61,12 +64,14 @@ internal class GameEngine(context: Context) : GLSurfaceView.Renderer {
     private val patrolAudio = PatrolAudio()
 
     init {
-        careerProfileStore.load(
+        careerProfileStore.loadProfile(
             onLoaded = { savedProfile ->
-                if (!careerUpdated) career = savedProfile
+                if (!careerUpdated) career = savedProfile.career
+                vehicleCondition = savedProfile.vehicleCondition
+                credits = savedProfile.credits
             },
             onError = {
-                announce("Career profile could not be loaded.", SystemClock.uptimeMillis())
+                announce("Career and vehicle profile could not be loaded.", SystemClock.uptimeMillis())
             }
         )
     }
@@ -115,11 +120,12 @@ internal class GameEngine(context: Context) : GLSurfaceView.Renderer {
     fun steer(value:Float){steering=value.coerceIn(-1f,1f)}
     fun interact(){interact=true}
     fun requestCall(){nextCall=true}
+    fun requestGarageRepair(){garageRepairRequested=true}
     fun toggleVehicle(){vehicleToggle=true}
     fun toggleSiren(){sirenToggle=true}
     fun chooseArrest(){arrestDecision=1}
     fun chooseCitation(){arrestDecision=-1}
-    fun snapshot()=GameSnapshot((abs(speed)*3.6f).toInt(),lights,siren,onFoot,missionName(),objective,distance(x,z,suspectX,suspectZ).toInt(),career.xp,radio,stage==4,career,vehicleCondition)
+    fun snapshot()=GameSnapshot((abs(speed)*3.6f).toInt(),lights,siren,onFoot,missionName(),objective,distance(x,z,suspectX,suspectZ).toInt(),career.xp,radio,stage==4,career,vehicleCondition,credits,distance(x,z,GARAGE_X,GARAGE_Z).toInt())
 
     override fun onSurfaceCreated(gl:GL10?,config:EGLConfig?){
         GLES20.glClearColor(0.43f,0.66f,0.79f,1f);GLES20.glEnable(GLES20.GL_DEPTH_TEST)
@@ -167,6 +173,9 @@ internal class GameEngine(context: Context) : GLSurfaceView.Renderer {
             else drawBox(b.x,b.y,b.z,b.sx,b.sy,b.sz,0f,b.color)
         }
         drawRoadPlanes()
+        drawBox(GARAGE_X,0.18f,GARAGE_Z,5.5f,0.12f,5.5f,0f,rgb(0x1c7a55))
+        drawBox(GARAGE_X,0.75f,GARAGE_Z,2.3f,0.95f,0.25f,0f,rgb(0xe8f0e8))
+        drawBox(GARAGE_X,1.35f,GARAGE_Z,1.8f,0.12f,0.2f,0f,rgb(0xf0c94f))
         for(c in traffic){
             val carX=trafficWorldX(c)
             val carZ=trafficWorldZ(c)
@@ -179,6 +188,24 @@ internal class GameEngine(context: Context) : GLSurfaceView.Renderer {
         if(now-lastUi>180L){lastUi=now;listener?.invoke(snapshot(),if(now<messageUntil)message else "")}
     }
     private fun update(dt:Float,now:Long){
+        if(garageRepairRequested){
+            garageRepairRequested=false
+            if(onFoot||abs(speed)>=0.5f||distance(x,z,GARAGE_X,GARAGE_Z)>GARAGE_RADIUS){
+                garageMessage="Garage unavailable: park inside the marked service area."
+                announce(garageMessage,now)
+            }else{
+                careerProfileStore.repairVehicle(
+                    onSaved={profile,result->
+                        credits=profile.credits
+                        vehicleCondition=profile.vehicleCondition
+                        garageMessage=result.message
+                        announce(garageMessage,SystemClock.uptimeMillis())
+                    },
+                    onError={announce("Garage transaction failed. No repair was confirmed.",SystemClock.uptimeMillis())}
+                )
+                announce("Garage: processing repair quote…",now)
+            }
+        }
         if(sirenToggle){sirenToggle=false;siren=!siren;lights=siren;radio=if(siren)"Dispatch: emergency equipment activated." else "Dispatch: emergency equipment off."}
         if(vehicleToggle){vehicleToggle=false
             if(!onFoot&&abs(speed)<1.5f){onFoot=true;speed=0f;x+=cos(angle)*1.7f;z-=sin(angle)*1.7f;announce("Officer on foot.",now)}
@@ -576,6 +603,9 @@ internal class GameEngine(context: Context) : GLSurfaceView.Renderer {
     private fun rgb(v:Int)=floatArrayOf(((v shr 16)and 255)/255f,((v shr 8)and 255)/255f,(v and 255)/255f)
     companion object{
         // Tune these values after profiling on real devices; keep gameplay distances independent.
+        private const val GARAGE_X=5f
+        private const val GARAGE_Z=20f
+        private const val GARAGE_RADIUS=7f
         private const val ROAD_SPACING=40f
         private const val SCENE_RENDER_DISTANCE=90f
         private const val VEHICLE_RENDER_DISTANCE=125f
