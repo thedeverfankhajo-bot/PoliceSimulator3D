@@ -19,7 +19,7 @@ import kotlin.math.min
 import kotlin.math.sin
 import kotlin.math.sqrt
 
-internal data class GameSnapshot(val speed: Int, val lights: Boolean, val siren: Boolean, val onFoot: Boolean, val mission: String, val objective: String, val distance: Int, val score: Int, val radio: String, val decisionRequired: Boolean, val career: CareerProgress)
+internal data class GameSnapshot(val speed: Int, val lights: Boolean, val siren: Boolean, val onFoot: Boolean, val mission: String, val objective: String, val distance: Int, val score: Int, val radio: String, val decisionRequired: Boolean, val career: CareerProgress, val vehicleCondition: Int)
 
 internal class GameEngine(context: Context) : GLSurfaceView.Renderer {
     @Volatile private var gas=false
@@ -34,6 +34,8 @@ internal class GameEngine(context: Context) : GLSurfaceView.Renderer {
     @Volatile private var z=12f
     @Volatile private var angle=0f
     @Volatile private var speed=0f
+    @Volatile private var vehicleCondition=VehicleDamageRules.MAX_CONDITION
+    @Volatile private var nextDamageNoticeAt=0L
     @Volatile private var lights=false
     @Volatile private var siren=false
     @Volatile private var onFoot=false
@@ -117,7 +119,7 @@ internal class GameEngine(context: Context) : GLSurfaceView.Renderer {
     fun toggleSiren(){sirenToggle=true}
     fun chooseArrest(){arrestDecision=1}
     fun chooseCitation(){arrestDecision=-1}
-    fun snapshot()=GameSnapshot((abs(speed)*3.6f).toInt(),lights,siren,onFoot,missionName(),objective,distance(x,z,suspectX,suspectZ).toInt(),career.xp,radio,stage==4,career)
+    fun snapshot()=GameSnapshot((abs(speed)*3.6f).toInt(),lights,siren,onFoot,missionName(),objective,distance(x,z,suspectX,suspectZ).toInt(),career.xp,radio,stage==4,career,vehicleCondition)
 
     override fun onSurfaceCreated(gl:GL10?,config:EGLConfig?){
         GLES20.glClearColor(0.43f,0.66f,0.79f,1f);GLES20.glEnable(GLES20.GL_DEPTH_TEST)
@@ -203,11 +205,17 @@ internal class GameEngine(context: Context) : GLSurfaceView.Renderer {
             arrestDecision=0
             handleDecision(selected==1,now)
         }
-        if(!onFoot){if(gas)speed+=12f*dt else if(brake)speed-=19f*dt else speed*=max(0f,1f-0.8f*dt)
-            speed=speed.coerceIn(-6f,30f);angle+=steering*dt*(0.3f+min(abs(speed)/12f,1f))*if(speed>=0f)1f else -1f
+        if(!onFoot){if(gas)speed+=12f*VehicleDamageRules.accelerationMultiplier(vehicleCondition)*dt else if(brake)speed-=19f*dt else speed*=max(0f,1f-0.8f*dt)
+            val maxSpeed=VehicleDamageRules.maximumSpeed(vehicleCondition)
+            speed=speed.coerceIn(-min(6f,maxSpeed*0.3f),maxSpeed);angle+=steering*dt*(0.3f+min(abs(speed)/12f,1f))*if(speed>=0f)1f else -1f
             val movement=WorldCollision.move(x,z,-sin(angle)*speed*dt,-cos(angle)*speed*dt,1.55f,buildingColliders)
             x=movement.x;z=movement.z
-            if(movement.collided){speed*=0.58f;patrolAudio.playImpact();reportCollision(now,false)}
+            if(movement.collided){
+                speed*=0.58f
+                damagePatrolVehicle(now,trafficImpact=false)
+                patrolAudio.playImpact()
+                reportCollision(now,false)
+            }
             patrolX=x;patrolZ=z
         }else{
             angle+=steering*dt*1.8f
@@ -278,6 +286,7 @@ internal class GameEngine(context: Context) : GLSurfaceView.Renderer {
                 patrolX = x
                 patrolZ = z
             }
+            if(!onFoot) damagePatrolVehicle(now,trafficImpact=true)
             patrolAudio.playImpact()
             reportCollision(now, onFoot)
         }
@@ -413,6 +422,20 @@ internal class GameEngine(context: Context) : GLSurfaceView.Renderer {
         message=text
         messageUntil=now+2800L
         patrolAudio.playRadioChirp()
+    }
+    private fun damagePatrolVehicle(now:Long,trafficImpact:Boolean){
+        val previous=vehicleCondition
+        vehicleCondition=VehicleDamageRules.applyImpact(previous,abs(speed),trafficImpact)
+        if(vehicleCondition<previous&&now>=nextDamageNoticeAt){
+            nextDamageNoticeAt=now+1800L
+            val level=when{
+                vehicleCondition<25->"CRITICAL"
+                vehicleCondition<50->"HEAVY"
+                vehicleCondition<75->"MODERATE"
+                else->"LIGHT"
+            }
+            announce("Patrol vehicle damage: $level. Condition $vehicleCondition%.",now)
+        }
     }
     private fun reportCollision(now:Long,onFoot:Boolean){
         if(now<nextCollisionNoticeAt)return
