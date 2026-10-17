@@ -8,6 +8,9 @@ Native Android police-patrol simulator inspired by the open-world patrol loop of
 - Custom 3D scene and gameplay loop: `GameEngine.kt`
 - OpenGL ES 2.0 via Android `GLSurfaceView` and `GLSurfaceView.Renderer`
 - Procedurally generated low-poly city blocks, with CC0 Poly Haven Asphalt 03 road texturing and Concrete Floor facade texturing
+- Deterministic accelerated 24-hour world clock with dawn/day/dusk/night phases and sky-color transitions
+- Scene brightness and road texture tint follow the world clock; emissive window meshes, warm streetlamp heads and subtle ground glow turn on after sunset
+- In-game HUD shows the current world time and phase; night emissive lighting uses procedural geometry and colors without copying game-specific assets
 - Distance-based scene and vehicle visibility checks to skip far-away small meshes while retaining large road/ground footprints
 - Third-person patrol driving with touch controls for steering, acceleration and braking
 - Traffic yields toward the road shoulder and reduces speed near an approaching patrol car when emergency lights and siren are active, then returns smoothly to normal
