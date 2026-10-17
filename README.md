@@ -10,6 +10,7 @@ Native Android police-patrol simulator inspired by the open-world patrol loop of
 - Procedurally generated low-poly city blocks, with CC0 Poly Haven Asphalt 03 road texturing and Concrete Floor facade texturing
 - Distance-based scene and vehicle visibility checks to skip far-away small meshes while retaining large road/ground footprints
 - Third-person patrol driving with touch controls for steering, acceleration and braking
+- Traffic yields toward the road shoulder and reduces speed near an approaching patrol car when emergency lights and siren are active, then returns smoothly to normal
 - Building collision for patrol-vehicle and on-foot movement, including wall sliding, world bounds and sub-stepped movement to reduce tunnelling
 - Animated red/blue emergency lightbar, native synthesized siren/engine/impact audio, and a basic walking gait for the officer
 - Dispatch callouts, suspect stop, on-foot field contact and licence/warrant records check

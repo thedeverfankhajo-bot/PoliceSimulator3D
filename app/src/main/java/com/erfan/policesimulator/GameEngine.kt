@@ -96,7 +96,7 @@ internal class GameEngine(context: Context) : GLSurfaceView.Renderer {
     private var viewportHeight=1
     private data class Box(val x:Float,val y:Float,val z:Float,val sx:Float,val sy:Float,val sz:Float,val color:FloatArray,val textureKind:Int=0)
     private data class RoadPlane(val vertices:FloatBuffer)
-    private data class Car(var x:Float,var z:Float,val angle:Float,val speed:Float,val color:FloatArray,val verticalRoad:Boolean)
+    private data class Car(var x:Float,var z:Float,val angle:Float,val speed:Float,val color:FloatArray,val verticalRoad:Boolean,var shoulderOffset:Float=0f,var speedFactor:Float=1f)
 
     fun setListener(value:(GameSnapshot,String)->Unit){listener=value}
     fun resumeAudio(){patrolAudio.setActive(true)}
@@ -160,8 +160,10 @@ internal class GameEngine(context: Context) : GLSurfaceView.Renderer {
         }
         drawRoadPlanes()
         for(c in traffic){
-            if(RenderDistance.intersectsCircle(x,z,c.x,c.z,1.0f,1.9f,VEHICLE_RENDER_DISTANCE))
-                drawCar(c.x,c.z,c.angle,c.color,false,now)
+            val carX=trafficWorldX(c)
+            val carZ=trafficWorldZ(c)
+            if(RenderDistance.intersectsCircle(x,z,carX,carZ,1.0f,1.9f,VEHICLE_RENDER_DISTANCE))
+                drawCar(carX,carZ,c.angle,c.color,false,now)
         }
         if(stage!=5 && RenderDistance.intersectsCircle(x,z,suspectX,suspectZ,1f,1.9f,VEHICLE_RENDER_DISTANCE))
             drawCar(suspectX,suspectZ,0f,rgb(0x9aa5ab),false,now)
@@ -199,15 +201,53 @@ internal class GameEngine(context: Context) : GLSurfaceView.Renderer {
             x=movement.x;z=movement.z
             if(movement.collided&&move!=0f){patrolAudio.playImpact();reportCollision(now,true)}
         }
-        // Resolve contacts against the updated traffic positions before the next frame.
+        // Traffic yields only to an approaching patrol vehicle using both emergency lights and siren.
+        // Lane motion and speed response are smoothed so vehicles do not snap or teleport.
+        val emergencyPriority = lights && siren && !onFoot
+        traffic.forEach { car ->
+            val carX = trafficWorldX(car)
+            val carZ = trafficWorldZ(car)
+            val distanceToPatrol = distance(x, z, carX, carZ)
+            val yielding = TrafficBehavior.shouldYield(
+                emergencyActive = emergencyPriority,
+                distance = distanceToPatrol
+            )
+            val lanePosition = if (car.verticalRoad) car.x else car.z
+            val roadCenter = kotlin.math.round(lanePosition / ROAD_SPACING) * ROAD_SPACING
+            car.shoulderOffset = TrafficBehavior.approachShoulderOffset(
+                currentOffset = car.shoulderOffset,
+                lanePosition = lanePosition,
+                roadCenter = roadCenter,
+                yielding = yielding,
+                deltaSeconds = dt
+            )
+            car.speedFactor = TrafficBehavior.approachSpeedFactor(
+                currentFactor = car.speedFactor,
+                yielding = yielding,
+                deltaSeconds = dt
+            )
+
+            val trafficSpeed = car.speed * car.speedFactor
+            if (car.verticalRoad) {
+                car.z += -cos(car.angle) * trafficSpeed * dt
+                if (car.z < -165f) car.z = 165f
+                if (car.z > 165f) car.z = -165f
+            } else {
+                car.x += -sin(car.angle) * trafficSpeed * dt
+                if (car.x < -165f) car.x = 165f
+                if (car.x > 165f) car.x = -165f
+            }
+        }
+
+        // Resolve contacts using the rendered, shoulder-adjusted traffic positions.
         var trafficContact = false
         val contactRadius = if (onFoot) 0.42f else 1.55f
         for (car in traffic) {
             val contact = TrafficCollisionRules.resolve(
                 playerX = x,
                 playerZ = z,
-                trafficX = car.x,
-                trafficZ = car.z,
+                trafficX = trafficWorldX(car),
+                trafficZ = trafficWorldZ(car),
                 trafficMovesVertically = car.verticalRoad,
                 radius = contactRadius
             )
@@ -226,7 +266,6 @@ internal class GameEngine(context: Context) : GLSurfaceView.Renderer {
             patrolAudio.playImpact()
             reportCollision(now, onFoot)
         }
-        traffic.forEach{c->if(c.verticalRoad){c.z+=-cos(c.angle)*c.speed*dt;if(c.z< -165f)c.z=165f;if(c.z>165f)c.z= -165f}else{c.x+=-sin(c.angle)*c.speed*dt;if(c.x< -165f)c.x=165f;if(c.x>165f)c.x= -165f}}
         if(stage==1){if(lights&&siren&&distance(x,z,suspectX,suspectZ)<22f){stage=2;objective="Stop safely, exit the car and approach the driver.";radio="Dispatch: suspect stopped. Conduct a field contact.";announce("Vehicle stopped. Conduct a field contact.",now)}
             else{suspectZ-=5f*dt;if(suspectZ< -165f)suspectZ=165f}}
         patrolAudio.update(speed,siren,onFoot&&(gas||brake))
@@ -270,6 +309,8 @@ internal class GameEngine(context: Context) : GLSurfaceView.Renderer {
         announce(if(onFoot)"A building blocks your path." else "Impact detected. Patrol vehicle slowed.",now)
     }
     private fun distance(ax:Float,az:Float,bx:Float,bz:Float):Float{val dx=ax-bx;val dz=az-bz;return kotlin.math.sqrt(dx*dx+dz*dz)}
+    private fun trafficWorldX(car:Car)=car.x+(if(car.verticalRoad)car.shoulderOffset else 0f)
+    private fun trafficWorldZ(car:Car)=car.z+(if(car.verticalRoad)0f else car.shoulderOffset)
     private fun buildCity(){
         boxes.clear();buildingColliders.clear();roadPlanes.clear();boxes.add(Box(0f,-0.3f,0f,360f,0.5f,360f,rgb(0x626a63)));val roads=(-3..3).map{it*40f}
         roads.forEach{rx->boxes.add(Box(rx,0f,0f,12f,0.08f,340f,rgb(0x30383e)));boxes.add(Box(rx-6.2f,0.08f,0f,0.8f,0.16f,340f,rgb(0x929898)));boxes.add(Box(rx+6.2f,0.08f,0f,0.8f,0.16f,340f,rgb(0x929898)));for(rz in -160..160 step 20)boxes.add(Box(rx,0.06f,rz.toFloat(),0.13f,0.02f,4f,rgb(0xe8c967)))}
@@ -401,6 +442,7 @@ internal class GameEngine(context: Context) : GLSurfaceView.Renderer {
     private fun rgb(v:Int)=floatArrayOf(((v shr 16)and 255)/255f,((v shr 8)and 255)/255f,(v and 255)/255f)
     companion object{
         // Tune these values after profiling on real devices; keep gameplay distances independent.
+        private const val ROAD_SPACING=40f
         private const val SCENE_RENDER_DISTANCE=90f
         private const val VEHICLE_RENDER_DISTANCE=125f
         private const val TEXTURE_CONCRETE=2
