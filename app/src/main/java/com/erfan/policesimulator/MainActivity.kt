@@ -110,10 +110,7 @@ class MainActivity : Activity() {
             callButton.text = if (s.score > 0) "NEW CALL • " + s.score + " XP" else "NEW CALL"
             garageButton.text = if (s.garageDistance <= 7 && !s.onFoot && s.speed == 0) "REPAIR • ${(100 - s.vehicleCondition) * 5} CR" else "GARAGE • ${s.garageDistance} M"
             garageButton.isEnabled = s.garageDistance <= 7 && !s.onFoot && s.speed == 0
-            headlightButton.text = when {
-                s.worldPhase == "NIGHT" -> "HEADLIGHTS • AUTO/NIGHT"
-                else -> "HEADLIGHTS • AUTO"
-            }
+            headlightButton.text = "HEADLIGHTS • ${s.headlightMode}"
         } }
         setContentView(root)
     }
