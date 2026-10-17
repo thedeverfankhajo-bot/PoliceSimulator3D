@@ -15,6 +15,9 @@ Native Android police-patrol simulator inspired by the open-world patrol loop of
 - Grid-based suspect street routing using breadth-first search, with collision-rectangle checks to avoid blocked street segments
 - Building collision for patrol-vehicle and on-foot movement, including wall sliding, world bounds and sub-stepped movement to reduce tunnelling
 - Cumulative patrol-vehicle collision damage with impact severity, traffic-contact penalties, condition-based acceleration and top-speed limits, and a live vehicle-condition HUD
+- A marked repair garage near the starting patrol route; repairs require the patrol car to be stopped in the service area
+- Garage repair quotes scale with missing vehicle condition (5 credits per condition point); successful repairs atomically deduct credits and restore full condition in DataStore
+- Vehicle condition and garage credits persist locally alongside the career profile; garage transaction rules are covered by JVM unit tests
 - Animated red/blue emergency lightbar, native synthesized siren/engine/impact audio, and a basic walking gait for the officer
 - Four rotating dispatch profiles: suspicious vehicle, reckless driving, speeding complaint, and stolen vehicle
 - Callout-specific dispatch text, approach objectives, suspect vehicle colors, warrant rules, and compliant-versus-fleeing driver responses
