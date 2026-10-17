@@ -16,10 +16,11 @@ import kotlin.math.abs
 import kotlin.math.cos
 import kotlin.math.max
 import kotlin.math.min
+import kotlin.math.PI
 import kotlin.math.sin
 import kotlin.math.sqrt
 
-internal data class GameSnapshot(val speed: Int, val lights: Boolean, val siren: Boolean, val onFoot: Boolean, val mission: String, val objective: String, val distance: Int, val score: Int, val radio: String, val decisionRequired: Boolean, val career: CareerProgress, val vehicleCondition: Int, val credits: Int, val garageDistance: Int)
+internal data class GameSnapshot(val speed: Int, val lights: Boolean, val siren: Boolean, val onFoot: Boolean, val mission: String, val objective: String, val distance: Int, val score: Int, val radio: String, val decisionRequired: Boolean, val career: CareerProgress, val vehicleCondition: Int, val credits: Int, val garageDistance: Int, val worldClock: String, val worldPhase: String)
 
 internal class GameEngine(context: Context) : GLSurfaceView.Renderer {
     @Volatile private var gas=false
@@ -39,6 +40,8 @@ internal class GameEngine(context: Context) : GLSurfaceView.Renderer {
     @Volatile private var garageRepairRequested=false
     @Volatile private var garageMessage="Garage: repair service available near the station."
     @Volatile private var repairAnimationUntil=0L
+    @Volatile private var worldTimeSeconds=19f*3_600f
+    @Volatile private var worldLighting=DayNightCycle.at(19f*3_600f)
     @Volatile private var nextDamageNoticeAt=0L
     @Volatile private var lights=false
     @Volatile private var siren=false
@@ -95,6 +98,7 @@ internal class GameEngine(context: Context) : GLSurfaceView.Renderer {
     private val traffic=ArrayList<Car>()
     private val buildingColliders=ArrayList<CollisionRect>()
     private val roadPlanes=ArrayList<RoadPlane>()
+    private val streetLamps=ArrayList<StreetLamp>()
     private var textureProgram=0
     private var texturePositionLoc=0
     private var textureUvLoc=0
@@ -108,8 +112,9 @@ internal class GameEngine(context: Context) : GLSurfaceView.Renderer {
     private var nextCollisionNoticeAt=0L
     private var viewportWidth=1
     private var viewportHeight=1
-    private data class Box(val x:Float,val y:Float,val z:Float,val sx:Float,val sy:Float,val sz:Float,val color:FloatArray,val textureKind:Int=0)
+    private data class Box(val x:Float,val y:Float,val z:Float,val sx:Float,val sy:Float,val sz:Float,val color:FloatArray,val textureKind:Int=0,val nightEmissive:Boolean=false)
     private data class RoadPlane(val vertices:FloatBuffer)
+    private data class StreetLamp(val x:Float,val z:Float)
     private data class Car(var x:Float,var z:Float,val angle:Float,val speed:Float,val color:FloatArray,val verticalRoad:Boolean,var shoulderOffset:Float=0f,var speedFactor:Float=1f)
 
     fun setListener(value:(GameSnapshot,String)->Unit){listener=value}
@@ -126,7 +131,7 @@ internal class GameEngine(context: Context) : GLSurfaceView.Renderer {
     fun toggleSiren(){sirenToggle=true}
     fun chooseArrest(){arrestDecision=1}
     fun chooseCitation(){arrestDecision=-1}
-    fun snapshot()=GameSnapshot((abs(speed)*3.6f).toInt(),lights,siren,onFoot,missionName(),objective,distance(x,z,suspectX,suspectZ).toInt(),career.xp,radio,stage==4,career,vehicleCondition,credits,distance(x,z,GARAGE_X,GARAGE_Z).toInt())
+    fun snapshot()=GameSnapshot((abs(speed)*3.6f).toInt(),lights,siren,onFoot,missionName(),objective,distance(x,z,suspectX,suspectZ).toInt(),career.xp,radio,stage==4,career,vehicleCondition,credits,distance(x,z,GARAGE_X,GARAGE_Z).toInt(),worldLighting.clockText,worldLighting.phase.displayName)
 
     override fun onSurfaceCreated(gl:GL10?,config:EGLConfig?){
         GLES20.glClearColor(0.43f,0.66f,0.79f,1f);GLES20.glEnable(GLES20.GL_DEPTH_TEST)
@@ -157,6 +162,9 @@ internal class GameEngine(context: Context) : GLSurfaceView.Renderer {
     }
     override fun onDrawFrame(gl:GL10?){
         val now=SystemClock.uptimeMillis();val dt=if(lastFrame==0L)0.016f else ((now-lastFrame).coerceAtMost(40L)/1000f);lastFrame=now
+        worldTimeSeconds=DayNightCycle.advance(worldTimeSeconds,dt)
+        worldLighting=DayNightCycle.at(worldTimeSeconds)
+        GLES20.glClearColor(worldLighting.skyRed,worldLighting.skyGreen,worldLighting.skyBlue,1f)
         update(dt,now);GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT or GLES20.GL_DEPTH_BUFFER_BIT)
         val back=if(onFoot)5.5f else 9.5f
         Matrix.setLookAtM(view,0,x+sin(angle)*back,if(onFoot)3f else 5f,z+cos(angle)*back,x-sin(angle)*2f,if(onFoot)1f else 0.8f,z-cos(angle)*2f,0f,1f,0f)
@@ -170,10 +178,12 @@ internal class GameEngine(context: Context) : GLSurfaceView.Renderer {
                     halfWidth=abs(b.sx)*0.5f, halfDepth=abs(b.sz)*0.5f,
                     viewDistance=SCENE_RENDER_DISTANCE
                 )) continue
-            if(b.textureKind==TEXTURE_CONCRETE)drawTexturedBox(b.x,b.y,b.z,b.sx,b.sy,b.sz,0f,concreteTexture,brighten(b.color))
-            else drawBox(b.x,b.y,b.z,b.sx,b.sy,b.sz,0f,b.color)
+            val visibleColor=if(b.nightEmissive&&worldLighting.streetLightsOn)rgb(0xffcc80)else b.color
+            val emissive=b.nightEmissive&&worldLighting.streetLightsOn
+            if(b.textureKind==TEXTURE_CONCRETE)drawTexturedBox(b.x,b.y,b.z,b.sx,b.sy,b.sz,0f,concreteTexture,worldTint(brighten(visibleColor)))
+            else drawBox(b.x,b.y,b.z,b.sx,b.sy,b.sz,0f,visibleColor,emissive)
         }
-        drawRoadPlanes()
+        drawRoadPlanes(worldTint(rgb(0xffffff)))
         drawBox(GARAGE_X,0.18f,GARAGE_Z,5.5f,0.12f,5.5f,0f,rgb(0x1c7a55))
         drawBox(GARAGE_X,0.75f,GARAGE_Z,2.3f,0.95f,0.25f,0f,rgb(0xe8f0e8))
         drawBox(GARAGE_X,1.35f,GARAGE_Z,1.8f,0.12f,0.2f,0f,rgb(0xf0c94f))
@@ -590,11 +600,12 @@ internal class GameEngine(context: Context) : GLSurfaceView.Renderer {
         )
         return RoadPlane(ByteBuffer.allocateDirect(values.size*4).order(ByteOrder.nativeOrder()).asFloatBuffer().apply{put(values);position(0)})
     }
-    private fun drawRoadPlanes(){
+    private fun drawRoadPlanes(tint:FloatArray){
         if(asphaltTexture==0||roadPlanes.isEmpty())return
         GLES20.glUseProgram(textureProgram)
         GLES20.glUniformMatrix4fv(textureMvpLoc,1,false,vp,0)
         GLES20.glUniform1i(textureSamplerLoc,0)
+        GLES20.glUniform3fv(textureTintLoc,1,tint,0)
         GLES20.glActiveTexture(GLES20.GL_TEXTURE0)
         GLES20.glBindTexture(GLES20.GL_TEXTURE_2D,asphaltTexture)
         GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER,0)
@@ -644,10 +655,20 @@ internal class GameEngine(context: Context) : GLSurfaceView.Renderer {
         return ByteBuffer.allocateDirect(out.size*4).order(ByteOrder.nativeOrder()).asFloatBuffer().apply{put(out);position(0)}
     }
     private fun brighten(c:FloatArray)=floatArrayOf((c[0]+0.32f).coerceAtMost(1f),(c[1]+0.32f).coerceAtMost(1f),(c[2]+0.32f).coerceAtMost(1f))
-    private fun drawBox(cx:Float,cy:Float,cz:Float,sx:Float,sy:Float,sz:Float,a:Float,c:FloatArray){
+    private fun worldTint(c:FloatArray,emissive:Boolean=false):FloatArray{
+        if(emissive)return floatArrayOf(c[0].coerceIn(0f,1f),c[1].coerceIn(0f,1f),c[2].coerceIn(0f,1f))
+        val brightness=worldLighting.sceneBrightness
+        val nightBlue=(1f-worldLighting.daylight)*0.07f
+        return floatArrayOf(
+            (c[0]*brightness).coerceIn(0f,1f),
+            (c[1]*brightness).coerceIn(0f,1f),
+            (c[2]*(brightness+nightBlue)).coerceIn(0f,1f)
+        )
+    }
+    private fun drawBox(cx:Float,cy:Float,cz:Float,sx:Float,sy:Float,sz:Float,a:Float,c:FloatArray,emissive:Boolean=false){
         GLES20.glUseProgram(program)
         Matrix.setIdentityM(model,0);Matrix.translateM(model,0,cx,cy,cz);Matrix.rotateM(model,0,Math.toDegrees(a.toDouble()).toFloat(),0f,1f,0f);Matrix.scaleM(model,0,sx,sy,sz);Matrix.multiplyMM(mvp,0,vp,0,model,0)
-        GLES20.glUniformMatrix4fv(mvpLoc,1,false,mvp,0);cube.position(0);GLES20.glVertexAttribPointer(posLoc,3,GLES20.GL_FLOAT,false,0,cube);GLES20.glEnableVertexAttribArray(posLoc);GLES20.glUniform3fv(colorLoc,1,c,0);GLES20.glDrawArrays(GLES20.GL_TRIANGLES,0,vertexCount)
+        GLES20.glUniformMatrix4fv(mvpLoc,1,false,mvp,0);cube.position(0);GLES20.glVertexAttribPointer(posLoc,3,GLES20.GL_FLOAT,false,0,cube);GLES20.glEnableVertexAttribArray(posLoc);GLES20.glUniform3fv(colorLoc,1,worldTint(c,emissive),0);GLES20.glDrawArrays(GLES20.GL_TRIANGLES,0,vertexCount)
     }
     private fun shader(type:Int,source:String):Int{val s=GLES20.glCreateShader(type);GLES20.glShaderSource(s,source);GLES20.glCompileShader(s);val ok=IntArray(1);GLES20.glGetShaderiv(s,GLES20.GL_COMPILE_STATUS,ok,0);check(ok[0]==GLES20.GL_TRUE){GLES20.glGetShaderInfoLog(s)};return s}
     private fun makeCube():FloatBuffer{val v=floatArrayOf(
