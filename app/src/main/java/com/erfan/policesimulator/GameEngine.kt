@@ -30,6 +30,8 @@ internal class GameEngine(context: Context) : GLSurfaceView.Renderer {
     @Volatile private var nextCall=false
     @Volatile private var vehicleToggle=false
     @Volatile private var sirenToggle=false
+    @Volatile private var headlightToggle=false
+    @Volatile private var headlightMode=HeadlightMode.AUTO
     @Volatile private var arrestDecision=0
     @Volatile private var x=0f
     @Volatile private var z=12f
@@ -86,6 +88,7 @@ internal class GameEngine(context: Context) : GLSurfaceView.Renderer {
     private var program=0
     private var posLoc=0
     private var colorLoc=0
+    private var alphaLoc=0
     private var mvpLoc=0
     private var vertexCount=0
     private lateinit var cube: FloatBuffer
@@ -129,6 +132,7 @@ internal class GameEngine(context: Context) : GLSurfaceView.Renderer {
     fun requestGarageRepair(){garageRepairRequested=true}
     fun toggleVehicle(){vehicleToggle=true}
     fun toggleSiren(){sirenToggle=true}
+    fun toggleHeadlights(){headlightToggle=true}
     fun chooseArrest(){arrestDecision=1}
     fun chooseCitation(){arrestDecision=-1}
     fun snapshot()=GameSnapshot((abs(speed)*3.6f).toInt(),lights,siren,onFoot,missionName(),objective,distance(x,z,suspectX,suspectZ).toInt(),career.xp,radio,stage==4,career,vehicleCondition,credits,distance(x,z,GARAGE_X,GARAGE_Z).toInt(),worldLighting.clockText,worldLighting.phase.displayName)
@@ -139,7 +143,7 @@ internal class GameEngine(context: Context) : GLSurfaceView.Renderer {
         program=GLES20.glCreateProgram();GLES20.glAttachShader(program,vs);GLES20.glAttachShader(program,fs);GLES20.glLinkProgram(program)
         val status=IntArray(1);GLES20.glGetProgramiv(program,GLES20.GL_LINK_STATUS,status,0)
         check(status[0]==GLES20.GL_TRUE){GLES20.glGetProgramInfoLog(program)}
-        posLoc=GLES20.glGetAttribLocation(program,"aPosition");colorLoc=GLES20.glGetUniformLocation(program,"uColor");mvpLoc=GLES20.glGetUniformLocation(program,"uMvp")
+        posLoc=GLES20.glGetAttribLocation(program,"aPosition");colorLoc=GLES20.glGetUniformLocation(program,"uColor");alphaLoc=GLES20.glGetUniformLocation(program,"uAlpha");mvpLoc=GLES20.glGetUniformLocation(program,"uMvp")
         val textureVs=shader(GLES20.GL_VERTEX_SHADER,TEXTURE_VERTEX)
         val textureFs=shader(GLES20.GL_FRAGMENT_SHADER,TEXTURE_FRAGMENT)
         textureProgram=GLES20.glCreateProgram()
@@ -198,6 +202,7 @@ internal class GameEngine(context: Context) : GLSurfaceView.Renderer {
             drawCar(suspectX,suspectZ,suspectAngle,rgb(activeCallout?.targetVehicleColor ?: 0x9aa5ab),false,now)
         if(!onFoot){
             drawPatrolCar(patrolX,patrolZ,angle,now)
+            if(HeadlightRules.isOn(headlightMode,worldLighting)) drawHeadlightBeams(patrolX,patrolZ,angle,now)
             if(now<repairAnimationUntil) drawMechanic(now)
         } else drawOfficer(now)
         if(now-lastUi>180L){lastUi=now;listener?.invoke(snapshot(),if(now<messageUntil)message else "")}
@@ -223,6 +228,7 @@ internal class GameEngine(context: Context) : GLSurfaceView.Renderer {
             }
         }
         if(sirenToggle){sirenToggle=false;siren=!siren;lights=siren;radio=if(siren)"Dispatch: emergency equipment activated." else "Dispatch: emergency equipment off."}
+        if(headlightToggle){headlightToggle=false;headlightMode=HeadlightRules.next(headlightMode);announce("Headlights: ${headlightMode.label}",now)}
         if(vehicleToggle){vehicleToggle=false
             if(!onFoot&&abs(speed)<1.5f){onFoot=true;speed=0f;x+=cos(angle)*1.7f;z-=sin(angle)*1.7f;announce("Officer on foot.",now)}
             else if(onFoot&&distance(x,z,patrolX,patrolZ)<5f){onFoot=false;x=patrolX;z=patrolZ;announce("Back in patrol vehicle.",now)}
@@ -541,6 +547,37 @@ internal class GameEngine(context: Context) : GLSurfaceView.Renderer {
     private fun distance(ax:Float,az:Float,bx:Float,bz:Float):Float{val dx=ax-bx;val dz=az-bz;return kotlin.math.sqrt(dx*dx+dz*dz)}
     private fun trafficWorldX(car:Car)=car.x+(if(car.verticalRoad)car.shoulderOffset else 0f)
     private fun trafficWorldZ(car:Car)=car.z+(if(car.verticalRoad)0f else car.shoulderOffset)
+    private fun drawHeadlightBeams(carX:Float,carZ:Float,heading:Float,now:Long){
+        val fx=-sin(heading);val fz=-cos(heading);val rx=cos(heading);val rz=-sin(heading)
+        val alpha=if(worldLighting.daylight<0.25f)0.18f else if(worldLighting.daylight<0.7f)0.07f else 0.015f
+        for(side in -1..1 step 2){
+            val sx=carX+fx*1.05f+rx*side*0.43f;val sz=carZ+fz*1.05f+rz*side*0.43f
+            val ex=carX+fx*8f+rx*side*1.7f;val ez=carZ+fz*8f+rz*side*1.7f
+            drawGroundBeam(sx,sz,ex,ez,0.85f,alpha)
+        }
+        val pulse=0.94f+0.06f*sin(now/350.0).toFloat()
+        for(side in -1..1 step 2)drawBox(carX+fx*1.08f+rx*side*0.48f,0.64f,carZ+fz*1.08f+rz*side*0.48f,0.22f,0.12f,0.12f,heading,rgb(0xfff1c2,pulse),true)
+    }
+    private fun drawGroundBeam(sx:Float,sz:Float,ex:Float,ez:Float,width:Float,alpha:Float){
+        val dx=ex-sx;val dz=ez-sz;val len=sqrt(dx*dx+dz*dz).coerceAtLeast(0.01f)
+        val px=-dz/len*width*0.5f;val pz=dx/len*width*0.5f
+        val vertices=floatArrayOf(
+            sx,0.035f,sz, sx+px,0.035f,sz+pz, ex-px,0.035f,ez-pz,
+            sx,0.035f,sz, ex-px,0.035f,ez-pz, ex,0.035f,ez,
+            sx,0.035f,sz, ex,0.035f,ez, ex+px,0.035f,ez+pz,
+            sx,0.035f,sz, ex+px,0.035f,ez+pz, sx-px,0.035f,sz-pz
+        )
+        val buffer=ByteBuffer.allocateDirect(vertices.size*4).order(ByteOrder.nativeOrder()).asFloatBuffer()
+        buffer.put(vertices).position(0)
+        GLES20.glUseProgram(program)
+        Matrix.setIdentityM(model,0);Matrix.multiplyMM(mvp,0,vp,0,model,0)
+        GLES20.glUniformMatrix4fv(mvpLoc,1,false,mvp,0)
+        GLES20.glVertexAttribPointer(posLoc,3,GLES20.GL_FLOAT,false,0,buffer);GLES20.glEnableVertexAttribArray(posLoc)
+        GLES20.glUniform3fv(colorLoc,1,rgb(0xffe9b2),0);GLES20.glUniform1f(alphaLoc,alpha)
+        GLES20.glEnable(GLES20.GL_BLEND);GLES20.glBlendFunc(GLES20.GL_SRC_ALPHA,GLES20.GL_ONE_MINUS_SRC_ALPHA);GLES20.glDepthMask(false)
+        GLES20.glDrawArrays(GLES20.GL_TRIANGLES,0,vertices.size/3)
+        GLES20.glDepthMask(true);GLES20.glDisable(GLES20.GL_BLEND);GLES20.glUniform1f(alphaLoc,1f)
+    }
     private fun drawStreetLights(now:Long){
         val pulse=0.92f+0.08f*sin(now/420.0).toFloat()
         for(lamp in streetLamps){
@@ -719,7 +756,7 @@ internal class GameEngine(context: Context) : GLSurfaceView.Renderer {
         private const val VEHICLE_RENDER_DISTANCE=125f
         private const val TEXTURE_CONCRETE=2
         private const val VERTEX="attribute vec4 aPosition; uniform mat4 uMvp; void main(){gl_Position=uMvp*aPosition;}"
-        private const val FRAGMENT="precision mediump float; uniform vec3 uColor; void main(){gl_FragColor=vec4(uColor,1.0);}"
+        private const val FRAGMENT="precision mediump float; uniform vec3 uColor; uniform float uAlpha; void main(){gl_FragColor=vec4(uColor,uAlpha);}"
         private const val TEXTURE_VERTEX="attribute vec4 aPosition; attribute vec2 aTexCoord; uniform mat4 uMvp; varying vec2 vTexCoord; void main(){gl_Position=uMvp*aPosition;vTexCoord=aTexCoord;}"
         private const val TEXTURE_FRAGMENT="precision mediump float; uniform sampler2D uTexture; uniform vec3 uTint; varying vec2 vTexCoord; void main(){gl_FragColor=texture2D(uTexture,vTexCoord)*vec4(uTint,1.0);}"
     } 
