@@ -146,13 +146,25 @@ internal class GameEngine(context: Context) : GLSurfaceView.Renderer {
         val back=if(onFoot)5.5f else 9.5f
         Matrix.setLookAtM(view,0,x+sin(angle)*back,if(onFoot)3f else 5f,z+cos(angle)*back,x-sin(angle)*2f,if(onFoot)1f else 0.8f,z-cos(angle)*2f,0f,1f,0f)
         Matrix.multiplyMM(vp,0,projection,0,view,0);GLES20.glUseProgram(program)
+        // Distance culling avoids submitting far-away facade/window meshes every frame.
+        // Large ground and road boxes remain visible because the helper tests their full footprint.
         for(b in boxes){
+            if(!RenderDistance.intersectsCircle(
+                    playerX=x, playerZ=z,
+                    centerX=b.x, centerZ=b.z,
+                    halfWidth=abs(b.sx)*0.5f, halfDepth=abs(b.sz)*0.5f,
+                    viewDistance=SCENE_RENDER_DISTANCE
+                )) continue
             if(b.textureKind==TEXTURE_CONCRETE)drawTexturedBox(b.x,b.y,b.z,b.sx,b.sy,b.sz,0f,concreteTexture,brighten(b.color))
             else drawBox(b.x,b.y,b.z,b.sx,b.sy,b.sz,0f,b.color)
         }
         drawRoadPlanes()
-        for(c in traffic)drawCar(c.x,c.z,c.angle,c.color,false,now)
-        if(stage!=5)drawCar(suspectX,suspectZ,0f,rgb(0x9aa5ab),false,now)
+        for(c in traffic){
+            if(RenderDistance.intersectsCircle(x,z,c.x,c.z,1.0f,1.9f,VEHICLE_RENDER_DISTANCE))
+                drawCar(c.x,c.z,c.angle,c.color,false,now)
+        }
+        if(stage!=5 && RenderDistance.intersectsCircle(x,z,suspectX,suspectZ,1f,1.9f,VEHICLE_RENDER_DISTANCE))
+            drawCar(suspectX,suspectZ,0f,rgb(0x9aa5ab),false,now)
         if(!onFoot)drawCar(patrolX,patrolZ,angle,rgb(0x1d4777),true,now) else drawOfficer(now)
         if(now-lastUi>180L){lastUi=now;listener?.invoke(snapshot(),if(now<messageUntil)message else "")}
     }
@@ -388,6 +400,9 @@ internal class GameEngine(context: Context) : GLSurfaceView.Renderer {
         vertexCount=v.size/3;return ByteBuffer.allocateDirect(v.size*4).order(ByteOrder.nativeOrder()).asFloatBuffer().apply{put(v);position(0)}}
     private fun rgb(v:Int)=floatArrayOf(((v shr 16)and 255)/255f,((v shr 8)and 255)/255f,(v and 255)/255f)
     companion object{
+        // Tune these values after profiling on real devices; keep gameplay distances independent.
+        private const val SCENE_RENDER_DISTANCE=90f
+        private const val VEHICLE_RENDER_DISTANCE=125f
         private const val TEXTURE_CONCRETE=2
         private const val VERTEX="attribute vec4 aPosition; uniform mat4 uMvp; void main(){gl_Position=uMvp*aPosition;}"
         private const val FRAGMENT="precision mediump float; uniform vec3 uColor; void main(){gl_FragColor=vec4(uColor,1.0);}"

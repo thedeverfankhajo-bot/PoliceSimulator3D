@@ -8,6 +8,7 @@ Native Android police-patrol simulator inspired by the open-world patrol loop of
 - Custom 3D scene and gameplay loop: `GameEngine.kt`
 - OpenGL ES 2.0 via Android `GLSurfaceView` and `GLSurfaceView.Renderer`
 - Procedurally generated low-poly city blocks, with CC0 Poly Haven Asphalt 03 road texturing and Concrete Floor facade texturing
+- Distance-based scene and vehicle visibility checks to skip far-away small meshes while retaining large road/ground footprints
 - Third-person patrol driving with touch controls for steering, acceleration and braking
 - Building collision for patrol-vehicle and on-foot movement, including wall sliding, world bounds and sub-stepped movement to reduce tunnelling
 - Animated red/blue emergency lightbar, native synthesized siren/engine/impact audio, and a basic walking gait for the officer
@@ -17,7 +18,7 @@ Native Android police-patrol simulator inspired by the open-world patrol loop of
 - Career XP, completed calls and decision accuracy persist locally with AndroidX DataStore
 - Landscape full-screen layout; offline-first, no analytics or account requirement
 
-This is an early playable foundation, not feature parity with LSPDFR or a commercial open-world game. The world uses procedural low-poly geometry together with licensed CC0 diffuse textures. Siren, engine and impact sounds are synthesized locally so the app does not need bundled copyrighted audio. Vehicle-to-vehicle collision physics, richer pedestrian AI, advanced pursuit behavior, recorded radio voice, and map navigation remain future work. Career persistence is local to the device and is not synced to a server.
+This is an early playable foundation, not feature parity with LSPDFR or a commercial open-world game. The world uses procedural low-poly geometry together with licensed CC0 diffuse textures. Siren, engine and impact sounds are synthesized locally so the app does not need bundled copyrighted audio. Vehicle contacts currently use simplified collision footprints rather than mass/damage simulation. Richer pedestrian AI, advanced pursuit behavior, recorded radio voice, and map navigation remain future work. Career persistence is local to the device and is not synced to a server.
 
 ## Build the Android app
 
