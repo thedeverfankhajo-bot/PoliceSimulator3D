@@ -659,6 +659,10 @@ internal class GameEngine(context: Context) : GLSurfaceView.Renderer {
         -0.5f,-0.5f,-0.5f,0.5f,-0.5f,-0.5f,0.5f,-0.5f,0.5f,-0.5f,-0.5f,-0.5f,0.5f,-0.5f,0.5f,-0.5f,-0.5f,0.5f)
         vertexCount=v.size/3;return ByteBuffer.allocateDirect(v.size*4).order(ByteOrder.nativeOrder()).asFloatBuffer().apply{put(v);position(0)}}
     private fun rgb(v:Int)=floatArrayOf(((v shr 16)and 255)/255f,((v shr 8)and 255)/255f,(v and 255)/255f)
+    private fun rgb(v:Int,alpha:Float):FloatArray{
+        val base=rgb(v)
+        return floatArrayOf(base[0]*alpha,base[1]*alpha,base[2]*alpha)
+    }
     companion object{
         // Tune these values after profiling on real devices; keep gameplay distances independent.
         private const val GARAGE_X=5f
