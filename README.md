@@ -25,6 +25,7 @@ Native Android police-patrol simulator inspired by the open-world patrol loop of
 - Vehicle condition and garage credits persist locally alongside the career profile; garage transaction rules are covered by JVM unit tests
 - Animated red/blue emergency lightbar, native synthesized siren/engine/impact audio, and a basic walking gait for the officer
 - Controllable patrol headlights with AUTO/ON/OFF modes; AUTO follows the day/night lighting schedule and uses translucent, low-cost forward ground beams in the custom OpenGL ES renderer
+- Emergency lightbar reflections: synchronized red/blue pulses create low-cost tinted ground spill beside the patrol vehicle; intensity scales with daylight and the procedural effect uses no third-party game assets
 - Four rotating dispatch profiles: suspicious vehicle, reckless driving, speeding complaint, and stolen vehicle
 - Callout-specific dispatch text, approach objectives, suspect vehicle colors, warrant rules, and compliant-versus-fleeing driver responses
 - Dispatch callouts and suspect stop, on-foot field contact and licence/warrant records check
