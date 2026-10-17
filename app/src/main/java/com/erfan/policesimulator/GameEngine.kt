@@ -184,6 +184,7 @@ internal class GameEngine(context: Context) : GLSurfaceView.Renderer {
             else drawBox(b.x,b.y,b.z,b.sx,b.sy,b.sz,0f,visibleColor,emissive)
         }
         drawRoadPlanes(worldTint(rgb(0xffffff)))
+        if(worldLighting.streetLightsOn) drawStreetLights(now)
         drawBox(GARAGE_X,0.18f,GARAGE_Z,5.5f,0.12f,5.5f,0f,rgb(0x1c7a55))
         drawBox(GARAGE_X,0.75f,GARAGE_Z,2.3f,0.95f,0.25f,0f,rgb(0xe8f0e8))
         drawBox(GARAGE_X,1.35f,GARAGE_Z,1.8f,0.12f,0.2f,0f,rgb(0xf0c94f))
@@ -540,8 +541,18 @@ internal class GameEngine(context: Context) : GLSurfaceView.Renderer {
     private fun distance(ax:Float,az:Float,bx:Float,bz:Float):Float{val dx=ax-bx;val dz=az-bz;return kotlin.math.sqrt(dx*dx+dz*dz)}
     private fun trafficWorldX(car:Car)=car.x+(if(car.verticalRoad)car.shoulderOffset else 0f)
     private fun trafficWorldZ(car:Car)=car.z+(if(car.verticalRoad)0f else car.shoulderOffset)
+    private fun drawStreetLights(now:Long){
+        val pulse=0.92f+0.08f*sin(now/420.0).toFloat()
+        for(lamp in streetLamps){
+            if(!RenderDistance.intersectsCircle(x,z,lamp.x,lamp.z,0.8f,0.8f,SCENE_RENDER_DISTANCE))continue
+            drawBox(lamp.x,2.1f,lamp.z,0.16f,4.2f,0.16f,0f,worldTint(rgb(0x59616a)))
+            drawBox(lamp.x,4.15f,lamp.z,0.22f,0.14f,1.25f,0f,rgb(0xffd58a,pulse),true)
+            // Small warm pools suggest a streetlamp without expensive dynamic-light shaders.
+            drawBox(lamp.x,0.09f,lamp.z,2.8f,0.018f,2.8f,0f,rgb(0xb98245,0.13f*pulse),true)
+        }
+    }
     private fun buildCity(){
-        boxes.clear();buildingColliders.clear();roadPlanes.clear();boxes.add(Box(0f,-0.3f,0f,360f,0.5f,360f,rgb(0x626a63)));val roads=(-3..3).map{it*40f}
+        boxes.clear();buildingColliders.clear();roadPlanes.clear();streetLamps.clear();boxes.add(Box(0f,-0.3f,0f,360f,0.5f,360f,rgb(0x626a63)));val roads=(-3..3).map{it*40f}
         roads.forEach{rx->boxes.add(Box(rx,0f,0f,12f,0.08f,340f,rgb(0x30383e)));boxes.add(Box(rx-6.2f,0.08f,0f,0.8f,0.16f,340f,rgb(0x929898)));boxes.add(Box(rx+6.2f,0.08f,0f,0.8f,0.16f,340f,rgb(0x929898)));for(rz in -160..160 step 20)boxes.add(Box(rx,0.06f,rz.toFloat(),0.13f,0.02f,4f,rgb(0xe8c967)))}
         roads.forEach{rz->boxes.add(Box(0f,0f,rz,340f,0.08f,12f,rgb(0x30383e)));boxes.add(Box(0f,0.08f,rz-6.2f,340f,0.16f,0.8f,rgb(0x929898)));boxes.add(Box(0f,0.08f,rz+6.2f,340f,0.16f,0.8f,rgb(0x929898)))}
         roads.forEach{rx->roadPlanes.add(makeRoadPlane(rx,0.043f,12f,340f))}
@@ -550,9 +561,18 @@ internal class GameEngine(context: Context) : GLSurfaceView.Renderer {
         for(gx in -100..100 step 40)for(gz in -100..100 step 40){val bx=gx+(if((i/6)%2==0)12f else -12f)+(i%7-3)*0.35f;val bz=gz+(if(i%2==0)12f else -12f)+(i%5-2)*0.4f;val w=10f+(i%4)*1.7f;val d=10f+(i%3)*2f;val h=9f+(i%6)*3.2f
             buildingColliders.add(CollisionRect(bx,bz,w/2f,d/2f))
             boxes.add(Box(bx,h/2f,bz,w,h,d,rgb(colors[i++%colors.size]),TEXTURE_CONCRETE));boxes.add(Box(bx,h+0.1f,bz,w+0.2f,0.2f,d+0.2f,rgb(0x3f4c55)))
-            for(row in 0..3)for(col in -1..1){val wy=1.6f+row*(h-2f)/4f;boxes.add(Box(bx+col*w*0.27f,wy,bz-d/2f-0.03f,w*0.11f,0.72f,0.05f,rgb(0x8bb6c1)));boxes.add(Box(bx+col*w*0.27f,wy,bz+d/2f+0.03f,w*0.11f,0.72f,0.05f,rgb(0x8bb6c1)))}
+            for(row in 0..3)for(col in -1..1){
+                val wy=1.6f+row*(h-2f)/4f
+                boxes.add(Box(bx+col*w*0.27f,wy,bz-d/2f-0.03f,w*0.11f,0.72f,0.05f,rgb(0x8bb6c1),nightEmissive=true))
+                boxes.add(Box(bx+col*w*0.27f,wy,bz+d/2f+0.03f,w*0.11f,0.72f,0.05f,rgb(0x8bb6c1),nightEmissive=true))
+            }
         }
-        for(lx in -120..120 step 80)for(lz in -120..120 step 80){boxes.add(Box(lx+8f,2.1f,lz+8f,0.15f,4.2f,0.15f,rgb(0x4b565e)));boxes.add(Box(lx+8f,4.15f,lz+7.4f,0.2f,0.14f,1.2f,rgb(0xded5a7)))}
+        // Put lamps beside the grid roads rather than inside the traffic lanes.
+        for(lx in -120..120 step 80)for(lz in -120..120 step 80){
+            streetLamps.add(StreetLamp(lx+8f,lz+8f))
+            boxes.add(Box(lx+8f,2.1f,lz+8f,0.15f,4.2f,0.15f,rgb(0x4b565e)))
+            boxes.add(Box(lx+8f,4.15f,lz+7.4f,0.2f,0.14f,1.2f,rgb(0xded5a7),nightEmissive=true))
+        }
     }
     private fun buildTraffic(){traffic.clear();repeat(10){i->val vertical=i%2==0;val lane=((i%7)-3)*40f+if(i%3==0)2.5f else -2.5f;val a=if(vertical){if(i%4==0)0f else Math.PI.toFloat()}else{if(i%4==0)(Math.PI/2).toFloat()else(-Math.PI/2).toFloat()};val c=intArrayOf(0xcbd1d3,0x9aa8b0,0x718891,0xb5a68e)[i%4];traffic.add(if(vertical)Car(lane,(i*29-130).toFloat(),a,4f+(i%4),rgb(c),true)else Car((i*31-140).toFloat(),lane,a,4f+(i%4),rgb(c),false))}}
     private fun drawOfficer(now:Long){
@@ -574,7 +594,12 @@ internal class GameEngine(context: Context) : GLSurfaceView.Renderer {
     private fun drawCar(cx:Float,cz:Float,a:Float,paint:FloatArray,police:Boolean,now:Long){
         drawBox(cx,0.52f,cz,1.8f,0.5f,3.55f,a,paint);drawBox(cx,0.91f,cz,1.18f,0.48f,1.75f,a,if(police)rgb(0xe1e7e9)else rgb(0xbac5c8))
         for(side in intArrayOf(-1,1))for(end in intArrayOf(-1,1)){val lx=side*0.92f;val lz=end*1.05f;drawBox(cx+lx*cos(a)+lz*sin(a),0.32f,cz-lx*sin(a)+lz*cos(a),0.28f,0.48f,0.58f,a,rgb(0x171c21))}
-        if(police){drawBox(cx,1.2f,cz,0.8f,0.12f,0.28f,a,rgb(0x17202a));val flash=now/230L%2L==0L;drawBox(cx-0.23f,1.3f,cz,0.32f,0.14f,0.22f,a,rgb(if(lights&&flash)0xff394b else 0x7d202a));drawBox(cx+0.23f,1.3f,cz,0.32f,0.14f,0.22f,a,rgb(if(lights&&!flash)0x235dff else 0x20356d))}
+        if(police){
+            drawBox(cx,1.2f,cz,0.8f,0.12f,0.28f,a,rgb(0x17202a))
+            val flash=now/230L%2L==0L
+            drawBox(cx-0.23f,1.3f,cz,0.32f,0.14f,0.22f,a,rgb(if(lights&&flash)0xff394b else 0x7d202a),lights&&flash)
+            drawBox(cx+0.23f,1.3f,cz,0.32f,0.14f,0.22f,a,rgb(if(lights&&!flash)0x235dff else 0x20356d),lights&&!flash)
+        }
     }
     private fun loadTexture(assetPath:String):Int{
         val bitmap=applicationContext.assets.open(assetPath).use{BitmapFactory.decodeStream(it)}
